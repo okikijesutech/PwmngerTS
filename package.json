@@ -1,0 +1,24 @@
+{
+  "name": "pwmngerts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test:crypto": "ts-node packages/crypto/src/crypto.test.ts",
+    "test:vault": "ts-node packages/vault/src/vault.test.ts",
+    "test:integration": "ts-node packages/vault/src/integration.test.ts",
+    "test:all": "npm run test:crypto && npm run test:vault && npm run test:integration",
+    "test": "npm run test:all"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
