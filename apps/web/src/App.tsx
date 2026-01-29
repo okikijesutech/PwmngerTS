@@ -6,7 +6,12 @@ import {
   saveCurrentVault,
   lockVault,
   isUnlocked,
+  exportEncryptedVault,
+  importEncryptedVault,
 } from "../../../packages/appLogic/src/vaultManager";
+import { getPasswordStrength } from "./utils/passwordStrength";
+import { copyWithAutoClear } from "./utils/clipboard";
+
 
 export default function App() {
   const [passwordInput, setPasswordInput] = useState("");
@@ -14,6 +19,13 @@ export default function App() {
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
+  const [search, setSearch] = useState("");
+  const strength = getPasswordStrength(passwordInput);
+  const strengthColor = {
+    weak: "red",
+    medium: "orange",
+    strong: "green",
+  };
 
   async function handleCreate() {
     try {
@@ -116,30 +128,81 @@ export default function App() {
         <button onClick={handleAddEntry}>Add</button>
       </div>
 
+      <p style={{ color: strengthColor[strength] }}>
+        Strength: {strength.toUpperCase()}
+      </p>
+
+      <input
+        type='text'
+        placeholder='Search by site or user name'
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+
       <ul>
-        {vault.entries.map((e) => (
-          <li key={e.id}>
-            {e.site} — {e.username} —
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(e.password);
-                alert("Copied!");
-              }}
-            >
-              Copy
-            </button>
-            <button
-              onClick={() => {
-                const pass = window.confirm("Reveal password?");
-                if (pass) alert(`Password: ${e.password}`);
-              }}
-            >
-              Reveal
-            </button>
-            <button onClick={() => handleDelete(e.id)}>Delete</button>
-          </li>
-        ))}
+        {vault.entries
+          .filter(
+            (e) =>
+              e.site.toLowerCase().includes(search.toLowerCase()) ||
+              e.username.toLowerCase().includes(search.toLowerCase()),
+          )
+          .map((e) => (
+            <li key={e.id}>
+              {e.site} — {e.username} —
+              {/* <button
+                onClick={() => {
+                  navigator.clipboard.writeText(e.password);
+                  alert("Copied!");
+                }}
+              >
+                Copy
+              </button> */}
+              <button
+  onClick={() => copyWithAutoClear(e.password)}
+>
+  Copy
+</button>
+
+              <button
+                onClick={() => {
+                  const pass = window.confirm("Reveal password?");
+                  if (pass) alert(`Password: ${e.password}`);
+                }}
+              >
+                Reveal
+              </button>
+              <button onClick={() => handleDelete(e.id)}>Delete</button>
+            </li>
+          ))}
       </ul>
+      <button
+  onClick={() => {
+    const encrypted = exportEncryptedVault();
+    const blob = new Blob([encrypted], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "vault-backup.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }}
+>
+  Export Vault
+</button>
+<input
+  type="file"
+  accept=".json"
+  onChange={async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const text = await file.text();
+    await importEncryptedVault(text);
+    alert("Vault imported successfully");
+  }}
+/>
+
     </div>
   );
 }

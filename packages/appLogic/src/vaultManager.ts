@@ -84,7 +84,7 @@ export function resetAutoLock() {
   startAutoLock();
 }
 
-async function exportEncryptedVault() {
+export async function exportEncryptedVault() {
   if (!vaultKey || !unlockedVault) {
     throw new Error("Vault is not unlocked");
   }
@@ -92,7 +92,7 @@ async function exportEncryptedVault() {
   return encryptedVault;
 }
 
-async function importEncryptedVault(encryptedVault: any) {
+export async function importEncryptedVault(encryptedVault: any) {
   if (!vaultKey) {
     throw new Error("Vault is not unlocked");
   }
