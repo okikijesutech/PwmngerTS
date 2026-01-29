@@ -8,6 +8,7 @@ import type { Vault } from "../../vault/src/types";
 
 let unlockedVault: Vault | null = null;
 let vaultKey: CryptoKey | null = null;
+let autoLockTimer: number | null = null;
 
 export function isUnlocked(): boolean {
   return unlockedVault !== null;
@@ -68,4 +69,17 @@ export async function saveCurrentVault() {
     ...stored,
     encryptedVault,
   });
+}
+
+export function startAutoLock(timeoutMs: number = 300000) {
+  if (autoLockTimer) clearTimeout(autoLockTimer);
+  autoLockTimer = window.setTimeout(() => {
+    lockVault();
+    alert("Vault auto-locked due to inactivity");
+  }, timeoutMs);
+}
+
+export function resetAutoLock() {
+  if (autoLockTimer) clearTimeout(autoLockTimer);
+  startAutoLock();
 }
