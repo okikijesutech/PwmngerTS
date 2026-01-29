@@ -83,3 +83,45 @@ export function resetAutoLock() {
   if (autoLockTimer) clearTimeout(autoLockTimer);
   startAutoLock();
 }
+
+async function exportEncryptedVault() {
+  if (!vaultKey || !unlockedVault) {
+    throw new Error("Vault is not unlocked");
+  }
+  const encryptedVault = await encryptData(vaultKey, unlockedVault);
+  return encryptedVault;
+}
+
+async function importEncryptedVault(encryptedVault: any) {
+  if (!vaultKey) {
+    throw new Error("Vault is not unlocked");
+  }
+  unlockedVault = await decryptData<Vault>(vaultKey, encryptedVault);
+  await saveCurrentVault();
+}
+
+export async function syncToCloud(token: string) {
+  const encrypted = await exportEncryptedVault();
+
+  await fetch("http://localhost:4000/vault/sync", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ encryptedVault: encrypted }),
+  });
+}
+
+export async function syncFromCloud(token: string) {
+  const res = await fetch("http://localhost:4000/vault/sync", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const { encryptedVault } = await res.json();
+  if (encryptedVault) {
+    await importEncryptedVault(encryptedVault);
+  }
+}
