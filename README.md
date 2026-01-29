@@ -38,6 +38,7 @@ Backend (Node.js)
 ```
 
 ✔ Backend **never** sees:
+
 - Master password
 - Vault contents
 - Decrypted secrets
@@ -74,6 +75,7 @@ PwmngerTS/
 ## 🚀 Getting Started (Local Development)
 
 ### Prerequisites
+
 - Node.js v23+ and npm v11+
 - Git
 
@@ -128,6 +130,7 @@ See [docs/threat-model.md](docs/threat-model.md) for detailed security analysis.
 ## ☁️ Cloud Sync (Optional)
 
 Cloud sync uses the Node.js backend to:
+
 - Authenticate users (JWT)
 - Store encrypted vault blobs
 - Never decrypt vault data
@@ -153,6 +156,7 @@ npm run test:integration # Full integration
 ```
 
 **Test coverage:**
+
 - ✅ Unit tests for crypto, vault, and storage
 - ✅ Integration tests for vault operations
 - ✅ Controller tests for API endpoints
@@ -165,6 +169,7 @@ npm run test:integration # Full integration
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 **Quick start:**
+
 1. Fork the repo
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit changes (`git commit -m 'Add amazing feature'`)
@@ -172,6 +177,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for det
 5. Open a Pull Request
 
 **Good first contributions:**
+
 - UI improvements & styling
 - Additional tests
 - Accessibility improvements
@@ -185,6 +191,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for det
 **Do not open public issues for security vulnerabilities!**
 
 Please report responsibly via:
+
 - [GitHub Security Advisories](https://github.com/okikijesutech/PwmngerTS/security/advisories)
 - See [SECURITY.md](SECURITY.md) for full details
 
@@ -199,6 +206,7 @@ This project is licensed under the **MIT License** — see [LICENSE](LICENSE) fo
 ## 🧠 Motivation & Learning Goals
 
 PwmngerTS was built to:
+
 - ✅ Learn zero-knowledge architecture principles
 - ✅ Practice client-side encryption
 - ✅ Explore monorepo structure with TypeScript
@@ -231,4 +239,3 @@ This is an open-source learning project. Feel free to fork, study, and improve!
 ---
 
 **Built with ❤️ by the PwmngerTS community**
-
