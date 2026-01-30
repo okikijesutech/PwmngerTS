@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div id="locked">
+      <input
+        type="password"
+        id="masterPassword"
+        placeholder="Master password"
+      />
+      <button id="unlockBtn">Unlock</button>
+    </div>
+
+    <div id="vault" hidden>
+      <input type="text" id="search" placeholder="Search..." />
+      <ul id="entries"></ul>
+    </div>
+
+    <section id="generator">
+      <h3>Generate Password</h3>
+      <input type="number" id="length" value="16" min="12" />
+      <button id="generate">Generate</button>
+      <input type="text" id="generatedPassword" readonly />
+      <div id="strength"></div>
+    </section>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

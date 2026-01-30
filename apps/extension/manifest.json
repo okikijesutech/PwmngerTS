@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "PWMnger",
+  "description": "Open-source zero-knowledge password manager",
+  "version": "0.1.0",
+  "action": {
+    "default_popup": "dist/popup/popup.html"
+  },
+  "background": {
+    "service_worker": "dist/background/background.js"
+  },
+  "permissions": ["storage", "clipboardWrite", "activeTab"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["dist/content/content.js"]
+    }
+  ],
+  "icons": {
+    "128": "assets/icon.png"
+  }
+}
