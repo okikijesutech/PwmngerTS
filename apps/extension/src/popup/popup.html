@@ -4,7 +4,13 @@
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <div id="locked">
+    <div id="register" hidden>
+      <h2>Create Vault</h2>
+      <input type="password" id="regPassword" placeholder="Set Master Password" />
+      <button id="createVaultBtn">Create</button>
+    </div>
+
+    <div id="locked" hidden>
       <input
         type="password"
         id="masterPassword"

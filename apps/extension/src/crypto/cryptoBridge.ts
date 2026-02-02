@@ -1,10 +1,26 @@
-import { decryptData, EncryptedPayload, deriveMasterKey } from "@pwmnger/crypto";
-import { EncryptedVault } from "@pwmnger/vault";
+import { decryptData, encryptData, EncryptedPayload, deriveMasterKey } from "@pwmnger/crypto";
+import { EncryptedVault, createEmptyVault } from "@pwmnger/vault";
+
+export async function createEncryptedVault(masterPassword: string): Promise<EncryptedVault> {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await deriveMasterKey(masterPassword, salt);
+  const emptyVault = createEmptyVault();
+  const encryptedData = await encryptData(key, JSON.stringify(emptyVault.entries));
+
+  return {
+    data: encryptedData,
+    salt: Array.from(salt),
+    updatedAt: Date.now(),
+    version: 1,
+  };
+}
 
 export async function decryptVault(
   vault: EncryptedVault,
   masterPassword: string
 ): Promise<any> {
+    
+
   try {
     const salt = new Uint8Array(vault.salt);
     const key = await deriveMasterKey(masterPassword, salt);
