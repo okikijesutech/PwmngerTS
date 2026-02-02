@@ -35,79 +35,53 @@ Create a personal fork and work from there.
 
 ```bash
 git checkout -b feature/your-feature-name
-3️⃣ Make Your Changes
+### 3️⃣ Make Your Changes
 
-Use TypeScript
+- Use TypeScript
+- Keep functions small and readable
+- Avoid adding dependencies unless necessary
+- **Do not log sensitive data**
 
-Keep functions small and readable
-
-Avoid adding dependencies unless necessary
-
-Do not log sensitive data
-
-4️⃣ Test Your Changes
+### 4️⃣ Test Your Changes
 
 Ensure the app:
+- Builds successfully
+- Does not break encryption logic
+- Does not expose plaintext secrets
 
-Builds successfully
-
-Does not break encryption logic
-
-Does not expose plaintext secrets
-
-5️⃣ Submit a Pull Request
+### 5️⃣ Submit a Pull Request
 
 Explain:
+- What problem your PR solves
+- Why the approach is secure
+- Any tradeoffs made
 
-What problem your PR solves
-
-Why the approach is secure
-
-Any tradeoffs made
-
-🧪 Areas Needing Help
+## 🧪 Areas Needing Help
 
 Good first issues include:
-
-UI/UX improvements
-
-Tests
-
-Accessibility
-
-Password strength visualization
-
-Documentation
+- UI/UX improvements
+- Tests
+- Accessibility
+- Password strength visualization
+- Documentation
 
 Security-sensitive changes should be discussed first.
 
-🔐 Security Contributions
+## 🔐 Security Contributions
 
 If your contribution involves:
-
-Cryptography
-
-Authentication
-
-Storage
-
-Sync logic
+- Cryptography
+- Authentication
+- Storage
+- Sync logic
 
 Please open a discussion before submitting a PR.
 
-❗ What Not to Do
+## ❗ What Not to Do
 
-Do NOT introduce server-side decryption
-
-Do NOT store plaintext passwords
-
-Do NOT log sensitive information
-
-Do NOT weaken encryption parameters
+- Do NOT introduce server-side decryption
+- Do NOT store plaintext passwords
+- Do NOT log sensitive information
+- Do NOT weaken encryption parameters
 
 Thank you for helping make this project better ❤️
-
-
-
-
-```

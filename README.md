@@ -52,7 +52,7 @@ PwmngerTS/
 ├─ apps/
 │  ├─ web/          # React + Vite frontend
 │  ├─ mobile/       # React Native (planned)
-│  └─ extension/    # Browser extension (planned)
+│  └─ extension/    # Browser extension (Chrome/Edge)
 │
 ├─ packages/
 │  ├─ crypto/       # Encryption & key derivation (PBKDF2, AES-GCM)
@@ -109,6 +109,15 @@ npm run dev
 ```
 
 Backend runs on: **http://localhost:4000**
+
+### 5️⃣ Build the Extension
+
+```bash
+cd apps/extension
+npm run build
+```
+
+Then load the `apps/extension/dist` directory as an **unpacked extension** in your browser.
 
 ---
 
@@ -219,7 +228,7 @@ This is an open-source learning project. Feel free to fork, study, and improve!
 
 ## 🗺️ Roadmap
 
-- [ ] Browser extension version
+- [x] Browser extension version
 - [ ] Mobile app (React Native)
 - [ ] Two-factor authentication
 - [ ] Password strength meter

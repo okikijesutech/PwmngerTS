@@ -1,23 +1,26 @@
 import { loadVault } from "../storage/vaultStorage";
 import { decryptVault } from "../crypto/cryptoBridge";
+import { EncryptedVault } from "@pwmnger/vault";
 
-const unlockBtn = document.getElementById("unlockBtn")!;
-const masterInput = document.getElementById("masterPassword")!;
-const vaultDiv = document.getElementById("vault")!;
-const lockedDiv = document.getElementById("locked")!;
-const entriesUl = document.getElementById("entries")!;
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => {
+  const unlockBtn = document.getElementById("unlockBtn")!;
+  const masterInput = document.getElementById("masterPassword")!;
+  const vaultDiv = document.getElementById("vault")!;
+  const lockedDiv = document.getElementById("locked")!;
+  const entriesUl = document.getElementById("entries")!;
 
-unlockBtn.addEventListener("click", async () => {
-  const master = (masterInput as HTMLInputElement).value;
-  const encryptedVault = await loadVault();
+  unlockBtn.addEventListener("click", async () => {
+    const master = (masterInput as HTMLInputElement).value;
+    const encryptedVault = await loadVault();
 
-  if (!encryptedVault) {
-    alert("No vault found");
-    return;
-  }
+    if (!encryptedVault) {
+      alert("No vault found");
+      return;
+    }
 
   try {
-    const entries = await decryptVault(encryptedVault.data, master);
+    const entries = await decryptVault(encryptedVault, master);
     renderEntries(entries);
     lockedDiv.hidden = true;
     vaultDiv.hidden = false;
@@ -39,6 +42,10 @@ function renderEntries(entries: any[]) {
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text);
   setTimeout(() => navigator.clipboard.writeText(""), 7000);
+}
+
+
+});
 }
 
 export function passwordStrength(password: string): number {

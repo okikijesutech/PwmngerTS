@@ -38,6 +38,12 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "paths": {
+      "@pwmnger/crypto": ["./packages/crypto/src"],
+      "@pwmnger/vault": ["./packages/vault/src"],
+      "@pwmnger/storage": ["./packages/storage/src"],
+      "@pwmnger/ui": ["./packages/ui/src"]
+    }
   }
 }

@@ -11,3 +11,12 @@ export type Vault = {
   entries: VaultEntry[];
   updatedAt: number;
 };
+
+import { EncryptedPayload } from "@pwmnger/crypto";
+
+export type EncryptedVault = {
+  data: EncryptedPayload;
+  salt: number[];
+  updatedAt: number;
+  version: number;
+};

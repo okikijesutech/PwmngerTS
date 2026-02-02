@@ -4,13 +4,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vite": "^5.0.0",
+    "@types/chrome": "^0.0.254",
+    "@pwmnger/crypto": "file:../../packages/crypto",
+    "@pwmnger/vault": "file:../../packages/vault",
+    "@pwmnger/storage": "file:../../packages/storage",
+    "@pwmnger/ui": "file:../../packages/ui"
   }
 }

@@ -6,7 +6,7 @@ export async function deriveMasterKey(password: string, salt: BufferSource) {
     encoder.encode(password),
     { name: "PBKDF2" },
     false,
-    ["deriveKey"]
+    ["deriveKey"],
   );
 
   return crypto.subtle.deriveKey(
@@ -19,6 +19,6 @@ export async function deriveMasterKey(password: string, salt: BufferSource) {
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
-    ["encrypt", "decrypt"]
+    ["encrypt", "decrypt"],
   );
 }
