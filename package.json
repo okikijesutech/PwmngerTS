@@ -17,7 +17,10 @@
     "test:applogic": "jest packages/appLogic/src",
     "test:storage": "jest packages/storage/src",
     "test:all": "jest",
-    "test": "jest"
+    "test": "jest",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "keywords": [],
   "author": "",

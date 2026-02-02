@@ -1,10 +1,10 @@
-import { deriveMasterKey } from "../../crypto/src/kdf";
-import { decryptData, encryptData } from "../../crypto/src";
-import { generateVaultKey } from "../../crypto/src/vaultKey";
-import { createEmptyVault } from "../../vault/src/vault";
-import { saveVault, loadVault } from "../../storage/src/indexedDb";
+import { deriveMasterKey } from "@pwmnger/crypto";
+import { decryptData, encryptData } from "@pwmnger/crypto";
+import { generateVaultKey } from "@pwmnger/crypto";
+import { createEmptyVault } from "@pwmnger/vault";
+import { saveVault, loadVault } from "@pwmnger/storage";
 
-import type { Vault } from "../../vault/src/types";
+import type { Vault } from "@pwmnger/vault";
 
 let unlockedVault: Vault | null = null;
 let vaultKey: CryptoKey | null = null;

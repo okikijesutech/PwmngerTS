@@ -12,7 +12,7 @@ export type Vault = {
   updatedAt: number;
 };
 
-import { EncryptedPayload } from "@pwmnger/crypto";
+import type { EncryptedPayload } from "@pwmnger/crypto";
 
 export type EncryptedVault = {
   data: EncryptedPayload;

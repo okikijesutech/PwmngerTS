@@ -1,4 +1,4 @@
-import { Vault } from "./types";
+import type { Vault } from "./types";
 
 export function createEmptyVault(): Vault {
   return {

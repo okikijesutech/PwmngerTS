@@ -1,4 +1,4 @@
-import { EncryptedPayload } from "./types";
+import type { EncryptedPayload } from "./types";
 
 export async function encryptData(
   key: CryptoKey,

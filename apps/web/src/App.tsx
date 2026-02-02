@@ -8,7 +8,7 @@ import {
   isUnlocked,
   exportEncryptedVault,
   importEncryptedVault,
-} from "../../../packages/appLogic/src/vaultManager";
+} from "@pwmnger/app-logic";
 import { getPasswordStrength } from "./utils/passwordStrength";
 import { copyWithAutoClear } from "./utils/clipboard";
 
@@ -176,9 +176,9 @@ export default function App() {
           ))}
       </ul>
       <button
-  onClick={() => {
-    const encrypted = exportEncryptedVault();
-    const blob = new Blob([encrypted], { type: "application/json" });
+  onClick={async () => {
+    const encrypted = await exportEncryptedVault();
+    const blob = new Blob([JSON.stringify(encrypted)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");

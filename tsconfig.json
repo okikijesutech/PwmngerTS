@@ -43,6 +43,7 @@
       "@pwmnger/crypto": ["./packages/crypto/src"],
       "@pwmnger/vault": ["./packages/vault/src"],
       "@pwmnger/storage": ["./packages/storage/src"],
+      "@pwmnger/app-logic": ["./packages/appLogic/src"],
       "@pwmnger/ui": ["./packages/ui/src"]
     }
   }
