@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <link rel="stylesheet" href="popup.css" />
+    <link rel="stylesheet" href="src/popup/popup.css" />
   </head>
   <body>
     <div id="register" hidden>
@@ -20,8 +20,22 @@
     </div>
 
     <div id="vault" hidden>
-      <input type="text" id="search" placeholder="Search..." />
+      <div class="vault-header">
+        <input type="text" id="search" placeholder="Search..." />
+        <button id="showAddEntryBtn" class="fab">+</button>
+      </div>
       <ul id="entries"></ul>
+    </div>
+
+    <div id="add-entry-form" hidden>
+      <h3>Add New Entry</h3>
+      <input type="text" id="siteInput" placeholder="Site (e.g. google.com)" />
+      <input type="text" id="usernameInput" placeholder="Username" />
+      <input type="password" id="passwordInput" placeholder="Password" />
+      <div class="button-group">
+        <button id="saveEntryBtn">Save</button>
+        <button id="cancelAddBtn" class="secondary">Cancel</button>
+      </div>
     </div>
 
     <section id="generator">
@@ -32,6 +46,6 @@
       <div id="strength"></div>
     </section>
 
-    <script type="module" src="popup.ts"></script>
+    <script type="module" src="src/popup/popup.ts"></script>
   </body>
 </html>

@@ -1,5 +1,5 @@
 import { loadVault, saveVault } from "../storage/vaultStorage";
-import { decryptVault, createEncryptedVault } from "../crypto/cryptoBridge";
+import { decryptVault, createEncryptedVault, encryptVault } from "../crypto/cryptoBridge";
 import { EncryptedVault } from "@pwmnger/vault";
 
 if (typeof document !== "undefined") {
@@ -10,15 +10,27 @@ if (typeof document !== "undefined") {
   const lockedDiv = document.getElementById("locked");
   const entriesUl = document.getElementById("entries");
   
-  // Register elements
-  const registerDiv = document.getElementById("register");
-  const regPasswordInput = document.getElementById("regPassword") as HTMLInputElement | null;
-  const createVaultBtn = document.getElementById("createVaultBtn");
+    const registerDiv = document.getElementById("register");
+    const regPasswordInput = document.getElementById("regPassword") as HTMLInputElement | null;
+    const createVaultBtn = document.getElementById("createVaultBtn");
 
-  if (!unlockBtn || !masterInput || !vaultDiv || !lockedDiv || !entriesUl || !registerDiv || !regPasswordInput || !createVaultBtn) {
-    console.error("Required DOM elements not found");
-    return;
-  }
+    // Add Entry elements
+    const addEntryForm = document.getElementById("add-entry-form");
+    const showAddEntryBtn = document.getElementById("showAddEntryBtn");
+    const saveEntryBtn = document.getElementById("saveEntryBtn");
+    const cancelAddBtn = document.getElementById("cancelAddBtn");
+    const siteInput = document.getElementById("siteInput") as HTMLInputElement | null;
+    const usernameInput = document.getElementById("usernameInput") as HTMLInputElement | null;
+    const passwordInput = document.getElementById("passwordInput") as HTMLInputElement | null;
+
+    let currentEntries: any[] = [];
+    let currentMaster: string = "";
+    let currentSalt: Uint8Array | null = null;
+
+    if (!unlockBtn || !masterInput || !vaultDiv || !lockedDiv || !entriesUl || !registerDiv || !regPasswordInput || !createVaultBtn || !addEntryForm || !showAddEntryBtn || !saveEntryBtn || !cancelAddBtn || !siteInput || !usernameInput || !passwordInput) {
+      console.error("Required DOM elements not found");
+      return;
+    }
 
   // Generator elements
   const generateBtn = document.getElementById("generate");
@@ -72,26 +84,90 @@ if (typeof document !== "undefined") {
     }
   });
 
-  unlockBtn.addEventListener("click", async () => {
-    const master = (masterInput as HTMLInputElement).value;
-    const encryptedVault = await loadVault();
+    unlockBtn.addEventListener("click", async () => {
+      const master = (masterInput as HTMLInputElement).value;
+      const encryptedVault = await loadVault();
 
-    if (!encryptedVault) {
-      // Should not happen if logic is correct, but safe fallback
-      registerDiv.hidden = false;
-      lockedDiv.hidden = true;
-      return;
-    }
+      if (!encryptedVault) {
+        registerDiv.hidden = false;
+        lockedDiv.hidden = true;
+        return;
+      }
 
-  try {
-    const entries = await decryptVault(encryptedVault, master);
-    renderEntries(entries, entriesUl);
-    lockedDiv.hidden = true;
-    vaultDiv.hidden = false;
-  } catch {
-    alert("Wrong master password");
-  }
-});
+      try {
+        const entries = await decryptVault(encryptedVault, master);
+        currentEntries = entries;
+        currentMaster = master;
+        currentSalt = new Uint8Array(encryptedVault.salt);
+        
+        renderEntries(entries, entriesUl);
+        lockedDiv.hidden = true;
+        vaultDiv.hidden = false;
+      } catch {
+        alert("Wrong master password");
+      }
+    });
+
+    // Add Entry Logic
+    showAddEntryBtn.addEventListener("click", async () => {
+      vaultDiv.hidden = true;
+      addEntryForm.hidden = false;
+
+      // Detect current site
+      try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab?.url) {
+          const url = new URL(tab.url);
+          siteInput.value = url.hostname;
+        }
+      } catch (e) {
+        console.error("Failed to detect tab:", e);
+      }
+    });
+
+    cancelAddBtn.addEventListener("click", () => {
+      addEntryForm.hidden = true;
+      vaultDiv.hidden = false;
+    });
+
+    saveEntryBtn.addEventListener("click", async () => {
+      const site = siteInput.value;
+      const username = usernameInput.value;
+      const password = passwordInput.value;
+
+      if (!site || !username || !password) {
+        alert("All fields are required");
+        return;
+      }
+
+      const newEntry = {
+        id: crypto.randomUUID(),
+        site,
+        username,
+        password,
+        createdAt: Date.now()
+      };
+
+      currentEntries.push(newEntry);
+
+      try {
+        if (!currentSalt) throw new Error("Salt missing");
+        const updatedVault = await encryptVault(currentEntries, currentMaster, currentSalt);
+        await saveVault(updatedVault);
+        
+        renderEntries(currentEntries, entriesUl);
+        addEntryForm.hidden = true;
+        vaultDiv.hidden = false;
+        
+        // Reset form
+        siteInput.value = "";
+        usernameInput.value = "";
+        passwordInput.value = "";
+      } catch (e) {
+        console.error(e);
+        alert("Failed to save entry");
+      }
+    });
 
 function renderEntries(entries: any[], container: HTMLElement) {
   container.innerHTML = "";

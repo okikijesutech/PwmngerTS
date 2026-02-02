@@ -31,3 +31,19 @@ export async function decryptVault(
     throw new Error("Invalid master password or corrupted data");
   }
 }
+
+export async function encryptVault(
+  entries: any[],
+  masterPassword: string,
+  salt: Uint8Array
+): Promise<EncryptedVault> {
+  const key = await deriveMasterKey(masterPassword, salt as any);
+  const encryptedData = await encryptData(key, JSON.stringify(entries));
+
+  return {
+    data: encryptedData,
+    salt: Array.from(salt),
+    updatedAt: Date.now(),
+    version: 1,
+  };
+}
