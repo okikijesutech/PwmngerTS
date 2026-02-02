@@ -9,7 +9,7 @@ export async function decryptVault(
     const salt = new Uint8Array(vault.salt);
     const key = await deriveMasterKey(masterPassword, salt);
     const decryptedJson = await decryptData(key, vault.data);
-    return JSON.parse(decryptedJson);
+    return JSON.parse(decryptedJson as string);
   } catch (error) {
     console.error("Decryption failed:", error);
     throw new Error("Invalid master password or corrupted data");

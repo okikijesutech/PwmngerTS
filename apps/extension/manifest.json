@@ -4,7 +4,7 @@
   "description": "Open-source zero-knowledge password manager",
   "version": "0.1.0",
   "action": {
-    "default_popup": "dist/popup/popup.html"
+    "default_popup": "dist/src/popup/popup.html"
   },
   "background": {
     "service_worker": "dist/background/background.js"
