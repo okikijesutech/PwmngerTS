@@ -125,3 +125,27 @@ export async function syncFromCloud(token: string) {
     await importEncryptedVault(encryptedVault);
   }
 }
+export async function syncVaultWithCloud(token: string) {
+  // 1. Pull latest from cloud
+  await syncFromCloud(token);
+  
+  // 2. Push current (merged) local to cloud
+  const encrypted = await exportEncryptedVault();
+
+  const res = await fetch("http://localhost:4000/vault/sync", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ encryptedVault: encrypted }),
+  });
+
+  if (res.status === 409) {
+    // Conflict handled by immediate retry pull
+    await syncFromCloud(token);
+    throw new Error("Conflict detected and resolved from cloud. Please review your entries.");
+  }
+  
+  if (!res.ok) throw new Error("Sync failed");
+}
