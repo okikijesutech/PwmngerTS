@@ -159,3 +159,16 @@ li:active {
   text-align: center;
   margin-top: 8px;
 }
+
+.experimental-warning {
+  margin-top: 16px;
+  padding: 8px;
+  font-size: 10px;
+  text-align: center;
+  color: var(--error);
+  background-color: #fff8f8;
+  border: 1px solid #ffebeb;
+  border-radius: var(--radius);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

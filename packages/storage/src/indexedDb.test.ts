@@ -25,22 +25,14 @@ describe("IndexedDB Storage", () => {
     jest.clearAllMocks();
 
     // Setup mock store
+    const mockGetRequest = { result: null, onsuccess: null, onerror: null };
+    const mockPutRequest = { onsuccess: null, onerror: null };
     mockStore = {
-      put: jest.fn((data, key) => {
-        mockStore.putData = data;
-        return {
-          onsuccess: null,
-          onerror: null,
-        };
-      }),
-      get: jest.fn((key) => {
-        return {
-          result: mockStore.getData || null,
-          onsuccess: null,
-          onerror: null,
-        };
-      }),
+      get: jest.fn(() => mockGetRequest),
+      put: jest.fn(() => mockPutRequest),
     };
+    (global as any).mockGetRequest = mockGetRequest;
+    (global as any).mockPutRequest = mockPutRequest;
 
     // Setup mock transaction
     mockTransaction = {
@@ -59,21 +51,22 @@ describe("IndexedDB Storage", () => {
     };
 
     // Setup global indexedDB mock
-    (global as any).indexedDB = {
-      open: jest.fn((name, version) => {
-        return {
-          result: mockDB,
-          onupgradeneeded: null,
-          onsuccess: null,
-          onerror: null,
-        };
-      }),
+    const mockRequest = {
+      result: mockDB,
+      onupgradeneeded: null,
+      onsuccess: null,
+      onerror: null,
+      error: null,
     };
+    (global as any).indexedDB = {
+      open: jest.fn((name, version) => mockRequest),
+    };
+    (global as any).mockRequest = mockRequest;
   });
 
   describe("saveVault", () => {
     it("should save vault data to IndexedDB", async () => {
-      const openRequest = (global as any).indexedDB.open();
+      const openRequest = (global as any).mockRequest;
 
       const savePromise = saveVault(mockStoredVault);
 
@@ -98,12 +91,13 @@ describe("IndexedDB Storage", () => {
     });
 
     it("should reject on database error", async () => {
-      const openRequest = (global as any).indexedDB.open();
+      const openRequest = (global as any).mockRequest;
 
       const savePromise = saveVault(mockStoredVault);
 
       // Simulate error
       setTimeout(() => {
+        openRequest.error = new Error("DB Error");
         openRequest.onerror?.();
       }, 0);
 
@@ -111,7 +105,7 @@ describe("IndexedDB Storage", () => {
     });
 
     it("should reject on transaction error", async () => {
-      const openRequest = (global as any).indexedDB.open();
+      const openRequest = (global as any).mockRequest;
 
       const savePromise = saveVault(mockStoredVault);
 
@@ -122,6 +116,7 @@ describe("IndexedDB Storage", () => {
 
       // Simulate transaction error
       setTimeout(() => {
+        mockTransaction.error = new Error("Tx Error");
         mockTransaction.onerror?.();
       }, 10);
 
@@ -131,7 +126,7 @@ describe("IndexedDB Storage", () => {
 
   describe("loadVault", () => {
     it("should load vault data from IndexedDB", async () => {
-      const openRequest = (global as any).indexedDB.open();
+      const openRequest = (global as any).mockRequest;
 
       const loadPromise = loadVault();
 
@@ -145,7 +140,8 @@ describe("IndexedDB Storage", () => {
 
       // Simulate successful get request
       setTimeout(() => {
-        const getRequest = mockStore.get("main");
+        const getRequest = (global as any).mockGetRequest;
+        getRequest.result = mockStoredVault;
         getRequest.onsuccess?.();
       }, 10);
 
@@ -161,7 +157,7 @@ describe("IndexedDB Storage", () => {
     });
 
     it("should return null if no vault found", async () => {
-      const openRequest = (global as any).indexedDB.open();
+      const openRequest = (global as any).mockRequest;
 
       const loadPromise = loadVault();
 
@@ -175,7 +171,7 @@ describe("IndexedDB Storage", () => {
 
       // Simulate successful get request with no result
       setTimeout(() => {
-        const getRequest = mockStore.get("main");
+        const getRequest = (global as any).mockGetRequest;
         getRequest.result = undefined;
         getRequest.onsuccess?.();
       }, 10);
@@ -186,12 +182,13 @@ describe("IndexedDB Storage", () => {
     });
 
     it("should reject on database error", async () => {
-      const openRequest = (global as any).indexedDB.open();
+      const openRequest = (global as any).mockRequest;
 
       const loadPromise = loadVault();
 
       // Simulate error
       setTimeout(() => {
+        openRequest.error = new Error("DB Error");
         openRequest.onerror?.();
       }, 0);
 
@@ -199,7 +196,7 @@ describe("IndexedDB Storage", () => {
     });
 
     it("should reject on get request error", async () => {
-      const openRequest = (global as any).indexedDB.open();
+      const openRequest = (global as any).mockRequest;
 
       const loadPromise = loadVault();
 
@@ -210,7 +207,8 @@ describe("IndexedDB Storage", () => {
 
       // Simulate get request error
       setTimeout(() => {
-        const getRequest = mockStore.get("main");
+        const getRequest = (global as any).mockGetRequest;
+        getRequest.error = new Error("Get Request Error");
         getRequest.onerror?.();
       }, 10);
 
@@ -222,7 +220,7 @@ describe("IndexedDB Storage", () => {
     it("should create object store on first use if not exists", async () => {
       mockDB.objectStoreNames.contains = jest.fn(() => false);
 
-      const openRequest = (global as any).indexedDB.open();
+      const openRequest = (global as any).mockRequest;
 
       const loadPromise = loadVault();
 
@@ -238,7 +236,7 @@ describe("IndexedDB Storage", () => {
 
       // Simulate get
       setTimeout(() => {
-        const getRequest = mockStore.get("main");
+        const getRequest = (global as any).mockGetRequest;
         getRequest.onsuccess?.();
       }, 15);
 

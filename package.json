@@ -1,6 +1,6 @@
 {
   "name": "pwmngerts",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "index.js",
   "directories": {
@@ -8,7 +8,8 @@
   },
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "backend"
   ],
   "scripts": {
     "test:crypto": "jest packages/crypto/src/crypto.test.ts",
@@ -20,7 +21,8 @@
     "test": "jest",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "version": "echo 'Release manual tagging: git tag -a v%npm_package_version% -m \"Release v%npm_package_version%\"' && npm version"
   },
   "keywords": [],
   "author": "",

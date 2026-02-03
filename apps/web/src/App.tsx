@@ -20,6 +20,7 @@ export default function App() {
   const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("vault");
   const strength = getPasswordStrength(passwordInput);
   const strengthColor = {
     weak: "red",
@@ -95,6 +96,21 @@ export default function App() {
 
   return (
     <div style={{ padding: 20 }}>
+      <div style={{ 
+        marginBottom: 16, 
+        padding: 12, 
+        backgroundColor: '#fff8f8', 
+        border: '1px solid #ffebeb', 
+        borderRadius: 4, 
+        color: '#d32f2f', 
+        fontSize: '0.75rem', 
+        textAlign: 'center', 
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        letterSpacing: '1px'
+      }}>
+        ⚠️ Experimental Early Access: Use at your own risk. Data may be lost.
+      </div>
       <h2>Vault</h2>
       <button
         onClick={() => {

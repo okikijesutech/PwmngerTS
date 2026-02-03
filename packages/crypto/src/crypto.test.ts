@@ -4,87 +4,67 @@ import { deriveMasterKey } from "./kdf";
 import { randomBytes } from "./random";
 import { generateVaultKey } from "./vaultKey";
 
-async function runCryptoTests() {
-  console.log("🧪 Starting Crypto Tests...\n");
+describe("Crypto Package", () => {
+  let masterKey: CryptoKey;
+  let testData = {
+    username: "john_doe",
+    password: "secret123",
+    email: "john@example.com",
+  };
+  let salt: Uint8Array;
 
-  try {
-    // Test 1: Random Bytes Generation
-    console.log("Test 1: Random Bytes Generation");
+  beforeAll(async () => {
+    salt = randomBytes(16);
+    masterKey = await deriveMasterKey("MySecurePassword123!", salt);
+  });
+
+  test("Test 1: Random Bytes Generation", () => {
     const randomData = randomBytes(16);
-    console.log(`✓ Generated ${randomData.length} random bytes`);
-    console.log(
-      `  Sample: ${Array.from(randomData.slice(0, 4)).join(", ")}...\n`,
-    );
+    expect(randomData.length).toBe(16);
+    expect(randomData).toBeInstanceOf(Uint8Array);
+  });
 
-    // Test 2: Vault Key Generation
-    console.log("Test 2: Vault Key Generation");
+  test("Test 2: Vault Key Generation", async () => {
     const vaultKey = await generateVaultKey();
-    console.log(`✓ Generated vault key successfully`);
-    console.log(`  Key type: ${(vaultKey as any).privateKey?.type}`);
-    console.log(
-      `  Key extractable: ${(vaultKey as any).privateKey?.extractable}\n`,
-    );
+    expect(vaultKey).toBeDefined();
+    expect((vaultKey as any).type).toBe("secret");
+  });
 
-    // Test 3: Master Key Derivation
-    console.log("Test 3: Master Key Derivation (PBKDF2)");
-    const password = "MySecurePassword123!";
-    const salt = randomBytes(16);
-    const masterKey = await deriveMasterKey(password, salt);
-    console.log(`✓ Derived master key from password`);
-    console.log(`  Key type: ${masterKey.type}`);
-    console.log(`  Key usages: ${masterKey.usages.join(", ")}\n`);
+  test("Test 3: Master Key Derivation (PBKDF2)", async () => {
+    expect(masterKey.type).toBe("secret");
+    expect(masterKey.usages).toContain("encrypt");
+    expect(masterKey.usages).toContain("decrypt");
+  });
 
-    // Test 4: Encryption/Decryption Cycle
-    console.log("Test 4: Encryption/Decryption Cycle");
-    const testData = {
-      username: "john_doe",
-      password: "secret123",
-      email: "john@example.com",
-    };
-
+  test("Test 4: Encryption/Decryption Cycle", async () => {
     const encrypted = await encryptData(masterKey, testData);
-    console.log(`✓ Encrypted data successfully`);
-    console.log(`  IV length: ${encrypted.iv.length} bytes`);
-    console.log(`  Data length: ${encrypted.data.length} bytes\n`);
+    expect(encrypted.iv).toBeDefined();
+    expect(encrypted.data).toBeDefined();
 
     const decrypted = await decryptData(masterKey, {
       iv: new Uint8Array(encrypted.iv),
       data: new Uint8Array(encrypted.data),
     } as any);
-    console.log(`✓ Decrypted data successfully`);
-    console.log(
-      `  Matches original: ${JSON.stringify(decrypted) === JSON.stringify(testData)}`,
-    );
-    console.log(`  Decrypted: ${JSON.stringify(decrypted)}\n`);
 
-    // Test 5: Multiple Encryptions are Different
-    console.log("Test 5: Encryption Randomness Check");
+    expect(decrypted).toEqual(testData);
+  });
+
+  test("Test 5: Encryption Randomness Check", async () => {
+    const encrypted1 = await encryptData(masterKey, testData);
     const encrypted2 = await encryptData(masterKey, testData);
-    const ivMatch = encrypted.iv.every((v, i) => v === encrypted2.iv[i]);
-    console.log(`✓ Different IVs generated: ${!ivMatch}`);
-    console.log(`  First IV: ${encrypted.iv.slice(0, 4).join(", ")}...`);
-    console.log(`  Second IV: ${encrypted2.iv.slice(0, 4).join(", ")}...\n`);
+    
+    const ivMatch = Array.from(encrypted1.iv).every((v, i) => v === encrypted2.iv[i]);
+    expect(ivMatch).toBe(false);
+  });
 
-    // Test 6: Wrong Password Fails Decryption
-    console.log("Test 6: Wrong Key Fails Decryption");
+  test("Test 6: Wrong Key Fails Decryption", async () => {
+    const encrypted = await encryptData(masterKey, testData);
     const wrongPassword = "WrongPassword123!";
     const wrongMasterKey = await deriveMasterKey(wrongPassword, salt);
-    try {
-      await decryptData(wrongMasterKey, {
-        iv: new Uint8Array(encrypted.iv),
-        data: new Uint8Array(encrypted.data),
-      } as any);
-      console.log(`✗ Should have failed with wrong key!\n`);
-    } catch (error) {
-      console.log(`✓ Correctly rejected decryption with wrong key`);
-      console.log(`  Error: ${(error as Error).message}\n`);
-    }
 
-    console.log("✅ All Crypto Tests Passed!\n");
-  } catch (error) {
-    console.error("❌ Crypto Test Failed:", error);
-  }
-}
-
-// Run tests
-runCryptoTests();
+    await expect(decryptData(wrongMasterKey, {
+      iv: new Uint8Array(encrypted.iv),
+      data: new Uint8Array(encrypted.data),
+    } as any)).rejects.toThrow();
+  });
+});

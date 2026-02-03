@@ -10,4 +10,5 @@ module.exports = {
     "!packages/**/node_modules/**",
   ],
   coveragePathIgnorePatterns: ["/node_modules/", "test.ts"],
+  setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
 };
