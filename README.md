@@ -27,7 +27,7 @@ All encryption happens **locally on the user's device** — the server never see
 
 ```
 Client (Web / Extension / Mobile)
-├─ Encrypts vault locally (Web Crypto API)
+├─ Encrypts vault locally (Web Crypto API + Argon2id)
 ├─ Stores encrypted vault locally
 └─ Syncs encrypted blob to backend
 
@@ -55,7 +55,7 @@ PwmngerTS/
 │  └─ extension/    # Browser extension (Chrome/Edge)
 │
 ├─ packages/
-│  ├─ crypto/       # Encryption & key derivation (PBKDF2, AES-GCM)
+│  ├─ crypto/       # Encryption & key derivation (Argon2id, AES-GCM)
 │  ├─ storage/      # IndexedDB logic
 │  ├─ appLogic/     # Vault manager & business logic
 │  ├─ ui/           # Shared UI components
@@ -124,7 +124,7 @@ Then load the `apps/extension/dist` directory as an **unpacked extension** in yo
 ## 🔐 Security Model
 
 - ✅ All encryption is **client-side** (Web Crypto API)
-- ✅ Master password derives encryption keys using **PBKDF2**
+- ✅ Master password derives encryption keys using **Argon2id**
 - ✅ Vault encrypted with **AES-256-GCM**
 - ✅ Backend stores only **encrypted blobs**
 - ✅ No plaintext passwords transmitted or stored

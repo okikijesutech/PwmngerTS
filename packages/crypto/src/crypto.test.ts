@@ -30,7 +30,7 @@ describe("Crypto Package", () => {
     expect((vaultKey as any).type).toBe("secret");
   });
 
-  test("Test 3: Master Key Derivation (PBKDF2)", async () => {
+  test("Test 3: Master Key Derivation (Argon2id)", async () => {
     expect(masterKey.type).toBe("secret");
     expect(masterKey.usages).toContain("encrypt");
     expect(masterKey.usages).toContain("decrypt");
