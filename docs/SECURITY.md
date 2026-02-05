@@ -38,6 +38,8 @@ Include as much detail as possible:
 - The backend never sees plaintext passwords or master keys
 - Vaults are stored as encrypted blobs only
 - Master passwords are never transmitted or stored
+- **Account Recovery**: Recovery Keys are generated offline and allow vault decryption without the master password.
+- **Two-Factor Authentication**: TOTP secrets are stored and verified by the backend (standard industry practice).
 
 ---
 

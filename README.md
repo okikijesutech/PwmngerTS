@@ -11,37 +11,29 @@ All encryption happens **locally on the user's device** — the server never see
 
 ## ✨ Features
 
-- 🔐 Client-side encryption (zero-knowledge)
-- 🧠 Master password never leaves the device
-- 💾 Local encrypted storage (IndexedDB)
-- ☁️ Optional cloud sync (encrypted blobs only)
-- 🔄 Add / delete / manage vault entries
-- ⏱ Auto-lock on inactivity
-- 📋 Secure copy-to-clipboard
-- 🌍 Cross-platform ready (Web, Extension, Mobile)
-- 🧩 Open-source & extensible
+- 🔐 **Zero-Knowledge Architecture:** Client-side encryption using Web Crypto API.
+- 📂 **Folder Organization:** Manage and categorize entries efficiently.
+- 🛡️ **Two-Factor Authentication (2FA):** Secure login with TOTP enforcement.
+- 🆘 **Account Recovery:** Restore access via Emergency Recovery Kit if password is lost.
+- 🩺 **Password Health:** Analyze vault for weak/reused credentials.
+- ☁️ **Secure Sync:** Encrypted blob synchronization to self-hosted backend.
+- 🌍 **Cross-Platform:** Web Vault and Browser Extension.
 
 ---
 
 ## 🏗 Architecture Overview
 
-```
-Client (Web / Extension / Mobile)
-├─ Encrypts vault locally (Web Crypto API + Argon2id)
-├─ Stores encrypted vault locally
-└─ Syncs encrypted blob to backend
-
-Backend (Node.js)
-├─ Auth (email + password hash)
-├─ Stores encrypted vault only
-└─ Never decrypts user data
+```mermaid
+graph TD
+    Client[Client Device] -->|Encrypted Blob| Server[Backend API]
+    Client -->|Argon2id Hash| Server
+    Server -->|Storage| DB[(PostgreSQL)]
 ```
 
-✔ Backend **never** sees:
-
-- Master password
-- Vault contents
-- Decrypted secrets
+**Security Guarantees:**
+- Backend **NEVER** sees plaintext data.
+- Master Password **NEVER** leaves the client device.
+- Data is encrypted with **AES-256-GCM**.
 
 ---
 
@@ -50,58 +42,84 @@ Backend (Node.js)
 ```
 PwmngerTS/
 ├─ apps/
-│  ├─ web/          # React + Vite frontend
-│  ├─ mobile/       # React Native (planned)
-│  └─ extension/    # Browser extension (Chrome/Edge)
+│  ├─ web/          # React + Vite Web Vault
+│  └─ extension/    # Browser Extension (Chrome/Edge)
 │
 ├─ packages/
-│  ├─ crypto/       # Encryption & key derivation (Argon2id, AES-GCM)
-│  ├─ storage/      # IndexedDB logic
-│  ├─ appLogic/     # Vault manager & business logic
-│  ├─ ui/           # Shared UI components
-│  └─ vault/        # Vault types & operations
+│  ├─ crypto/       # Shared Cryptography Library
+│  ├─ appLogic/     # Core Business Logic
+│  └─ vault/        # Types & Validation
 │
-├─ backend/         # Node.js + Express API
+├─ backend/         # Node.js API (Storage & Auth)
 │
-├─ docs/            # Documentation & threat model
-├─ README.md        # This file
-├─ LICENSE          # MIT License
-├─ SECURITY.md      # Security reporting
-└─ CONTRIBUTING.md  # Contribution guidelines
+└─ docs/            # Documentation Portal
 ```
 
 ---
 
-## 🚀 Getting Started (Local Development)
+## 🚀 Getting Started
 
-### Prerequisites
+See the [User Guide](docs/USER_GUIDE.md) for how to use the application.
 
-- Node.js v23+ and npm v11+
-- Git
+For developers and self-hosting:
+- **Deployment**: See [Distribution Guide](docs/DISTRIBUTION.md)
+- **Contributing**: See [Contributing Guidelines](docs/CONTRIBUTING.md)
+- **Security**: See [Security Policy](docs/SECURITY.md)
 
-### 1️⃣ Clone the repo
+### Quick Start (Local Dev)
+
+1.  **Clone & Install**
+    ```bash
+    git clone https://github.com/okikijesutech/PwmngerTS.git
+    npm install
+    ```
+
+2.  **Start Environment**
+    ```bash
+    # Starts Web, Backend, and Extension build
+    npm run dev
+    ```
+
+3.  **Access**
+    - Web Vault: `http://localhost:5173`
+    - API: `http://localhost:4000`
+
+### 4️⃣ (Optional) Start the backend
 
 ```bash
-git clone https://github.com/okikijesutech/PwmngerTS.git
-cd PwmngerTS
-```
-
-### 2️⃣ Install dependencies
-
-```bash
-npm install
-```
-
-### 3️⃣ Start the web app
-
-```bash
-cd apps/web
+cd backend
 npm run dev
 ```
 
-The app should now be running at: **http://localhost:5173**
+Backend runs on: **http://localhost:4000**
 
-### 4️⃣ (Optional) Start the backend
+### 5️⃣ Build the Extension
+
+```bash
+cd apps/extension
+npm run build
+```
+
+Then load the `apps/extension/dist` directory as an **unpacked extension** in your browser.
+
+---
+
+## 🔐 Security Model
+
+- ✅ All encryption is **client-side** (Web Crypto API)
+- ✅ Master password derives encryption keys using **Argon2id**
+- ✅ Vault encrypted with **AES-256-GCM**
+- ✅ Backend stores only **encrypted blobs**
+- ✅ No plaintext passwords transmitted or stored
+- ☁️ Cloud Sync (Optional)
+
+Cloud sync uses the Node.js backend to:
+
+- Authenticate users (JWT)
+- Store encrypted vault blobs
+- Never decrypt vault data
+
+Users can manually export/import vaults as encrypted JSON backups.
 
 ```bash
 cd backend

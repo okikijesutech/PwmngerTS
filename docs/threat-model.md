@@ -21,6 +21,11 @@ Weak password ⚠️ Possible brute force
 ✅ Insider threat
 ✅ MITM attack
 ✅ Cloud leak
+✅ **Password Guessing (mitigated by 2FA)**
+
+⚠️ **New Risks Introduced**
+- **Recovery Key Theft**: If someone steals your printed Recovery Kit, they can decrypt your vault without your password. Treat it like a physical master key.
+- **2FA Device Loss**: If you lose your TOTP device and your password, you may be locked out permanently unless you have the Recovery Kit.
 
 ⚠️ Attacks You CANNOT STOP (no one can)
 
