@@ -27,7 +27,9 @@
     "express-validator": "^7.3.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
-    "prisma": "^6.19.2"
+    "otplib": "^13.2.1",
+    "prisma": "^6.19.2",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

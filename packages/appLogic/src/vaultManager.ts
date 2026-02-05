@@ -149,6 +149,49 @@ export async function deleteVaultEntry(id: string) {
   }
 }
 
+// --- Folder Management ---
+
+export async function createFolder(name: string) {
+  const vault = getVault();
+  if (!vault.folders) vault.folders = []; // Initialize if missing (migration)
+  
+  const newFolder = {
+    id: crypto.randomUUID(),
+    name
+  };
+  vault.folders.push(newFolder);
+  await saveCurrentVault();
+  return newFolder;
+}
+
+export async function deleteFolder(id: string) {
+  const vault = getVault();
+  if (!vault.folders) return;
+
+  // Remove folder
+  vault.folders = vault.folders.filter(f => f.id !== id);
+  
+  // Move entries in this folder back to root (null)
+  vault.entries.forEach(e => {
+    if (e.folderId === id) delete e.folderId;
+  });
+  
+  await saveCurrentVault();
+}
+
+export async function moveEntryToFolder(entryId: string, folderId: string | null) {
+  const vault = getVault();
+  const entry = vault.entries.find(e => e.id === entryId);
+  if (!entry) throw new Error("Entry not found");
+  
+  if (folderId) {
+    entry.folderId = folderId;
+  } else {
+    delete entry.folderId;
+  }
+  await saveCurrentVault();
+}
+
 export function startAutoLock(timeoutMs: number = 300000) {
   if (autoLockTimer) clearTimeout(autoLockTimer);
   autoLockTimer = window.setTimeout(() => {
@@ -170,6 +213,40 @@ export async function exportEncryptedVault() {
   return encryptedVault;
 }
 
+// Export decrypted vault as JSON (For user backup)
+export async function exportVaultData(): Promise<string> {
+  if (!unlockedVault) throw new Error("Vault must be unlocked to export data");
+  
+  // We export the Raw Vault structure
+  // In a real app, we might want to sanitize or format this (e.g. CSV)
+  return JSON.stringify(unlockedVault, null, 2);
+}
+
+// Import decrypted vault JSON
+export async function importVaultData(jsonString: string) {
+  if (!unlockedVault) throw new Error("Vault must be unlocked to import data");
+
+  try {
+    const importedVault = JSON.parse(jsonString) as Vault;
+    
+    // Basic validation
+    if (!importedVault.entries || !Array.isArray(importedVault.entries)) {
+      throw new Error("Invalid vault format: missing entries array");
+    }
+
+    // Merge strategy: Add non-duplicate IDs, or update if newer?
+    // For simplicity v1: Merge, keeping local if conflict (or just simple merge)
+    // Re-use mergeVaults logic
+    const merged = mergeVaults(unlockedVault, importedVault);
+    unlockedVault = merged;
+    
+    await saveCurrentVault();
+  } catch (err) {
+    console.error("Import failed:", err);
+    throw new Error("Failed to import vault: Invalid JSON or corrupted data");
+  }
+}
+
 export async function importEncryptedVault(encryptedVault: any) {
   if (!vaultKey) {
     throw new Error("Vault is not unlocked");
@@ -177,6 +254,30 @@ export async function importEncryptedVault(encryptedVault: any) {
   const remoteVault = await decryptData<Vault>(vaultKey, encryptedVault);
   unlockedVault = mergeVaults(getVault(), remoteVault);
   await saveCurrentVault();
+}
+
+export async function exportRecoveryData() {
+  if (!vaultKey) throw new Error("Vault is locked");
+  
+  // Generate a random Recovery Key (32 bytes)
+  const recoveryKeyBytes = crypto.getRandomValues(new Uint8Array(32));
+  const recoveryKeyBits = await crypto.subtle.importKey(
+    "raw", recoveryKeyBytes, "AES-GCM", true, ["encrypt", "decrypt", "wrapKey", "unwrapKey"]
+  );
+
+  // Wrap the Vault Key with this Recovery Key
+  // This allows us to regain access to the vault data (which is encrypted with Vault Key)
+  // without needing the Master Password.
+  const wrappedVaultKey = await wrapKey(recoveryKeyBits, vaultKey);
+  
+  // Convert recovery key to hex for user to save
+  const recoveryKeyHex = Array.from(recoveryKeyBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  return {
+    recoveryKey: recoveryKeyHex,
+    encryptedVaultKey: wrappedVaultKey, // This goes into the kit or the vault metadata
+    // In this model, we'll put it in the kit for now to be stateless on server
+  };
 }
 
 const BASE_URL = (globalThis as any).PW_API_URL || "http://localhost:4000";

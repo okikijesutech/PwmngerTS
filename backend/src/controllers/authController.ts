@@ -21,14 +21,28 @@ export async function register(req: Request, res: Response) {
   }
 }
 
+import { verify2FALogin } from "./twoFactorController";
+
 export async function login(req: Request, res: Response) {
-  const { email, authHash } = req.body;
+  const { email, authHash, twoFactorToken } = req.body;
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) return res.status(401).json({ error: "Invalid login" });
 
   const ok = await argon2.verify(user.passwordHash, authHash);
   if (!ok) return res.status(401).json({ error: "Invalid login" });
+
+  // 2FA Check
+  if (user.twoFactorSecret) {
+    if (!twoFactorToken) {
+      return res.status(401).json({ error: "2FA Required", requires2FA: true });
+    }
+    
+    const valid2FA = await verify2FALogin(user.id, twoFactorToken);
+    if (!valid2FA) {
+      return res.status(401).json({ error: "Invalid 2FA Token" });
+    }
+  }
 
   const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
     expiresIn: "7d",

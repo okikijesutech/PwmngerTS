@@ -29,4 +29,11 @@ const registerValidation = [
 router.post("/register", authLimiter, registerValidation, validate, register);
 router.post("/login", authLimiter, login);
 
+// 2FA Routes
+import { setup2FA, verify2FASetup } from "../controllers/twoFactorController";
+import { requireAuth } from "../middleware/authMiddleware";
+
+router.post("/2fa/setup", requireAuth, setup2FA);
+router.post("/2fa/verify", requireAuth, verify2FASetup);
+
 export default router;

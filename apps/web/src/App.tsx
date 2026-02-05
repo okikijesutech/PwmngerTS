@@ -60,12 +60,12 @@ export default function App() {
     }
   }
 
-  async function handleLogin(email: string, password: string) {
+  async function handleLogin(email: string, password: string, twoFactorToken?: string) {
     setIsAuthAction(true);
     setError("");
     try {
       // 1. Authenticate with backend to get token
-      const jwt = await loginAccount(email, password);
+      const jwt = await loginAccount(email, password, twoFactorToken);
       localStorage.setItem("pwmnger_token", jwt);
       setSession({ email });
 
@@ -84,6 +84,8 @@ export default function App() {
     } catch (err: any) {
       console.error("Login Error:", err);
       setError(err.message || "Login failed");
+      // Re-throw if it requires 2FA so LoginForm can catch it
+      if (err.requires2FA) throw err;
     } finally {
       setIsAuthAction(false);
     }
