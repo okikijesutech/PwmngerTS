@@ -10,6 +10,10 @@
       <p>Enter your credentials to sync your cloud vault.</p>
       <input type="email" id="loginEmail" placeholder="Email Address" />
       <input type="password" id="loginPassword" placeholder="Master Password" />
+      <div id="login2FASection" hidden>
+        <p style="font-size: 11px; margin-top: 8px;">2FA Required</p>
+        <input type="text" id="login2FAToken" placeholder="Authenticator Code" />
+      </div>
       <button id="loginBtn">Login & Sync</button>
       <p style="font-size: 12px; margin-top: 10px; text-align: center;">
         New user? <a href="#" id="showRegisterLink">Create Vault</a>
@@ -42,6 +46,7 @@
       <div class="glass-card">
         <div class="vault-header">
           <input type="text" id="searchInput" placeholder="Search entries..." />
+          <button id="syncBtn" title="Sync with Cloud" style="width: auto; padding: 0 8px; margin: 0; font-size: 16px;">🔄</button>
           <button id="showAddEntryBtn" class="fab">+</button>
         </div>
         <ul id="entries"></ul>
@@ -53,6 +58,9 @@
       <input type="text" id="siteInput" placeholder="Site (e.g. google.com)" />
       <input type="text" id="usernameInput" placeholder="Username" />
       <input type="password" id="passwordInput" placeholder="Password" />
+      <select id="folderSelect" style="width: 100%; margin-bottom: 12px; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+        <option value="">No Folder</option>
+      </select>
       <div class="button-group">
         <button id="saveEntryBtn">Save</button>
         <button id="cancelAddBtn" style="background: #8c8c8c">Cancel</button>
@@ -72,7 +80,7 @@
 
     <script type="module" src="src/popup/popup.ts"></script>
     <div class="experimental-warning">
-      Zero-Knowledge &bull; v0.1.0
+      Zero-Knowledge &bull; v1.0.0
     </div>
   </body>
 </html>

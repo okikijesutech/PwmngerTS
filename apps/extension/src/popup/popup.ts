@@ -41,7 +41,12 @@ if (typeof document !== "undefined") {
     let currentMaster: string = "";
     let currentSalt: Uint8Array | null = null;
 
-    if (!unlockBtn || !masterInput || !vaultDiv || !lockedDiv || !entriesUl || !registerDiv || !regPasswordInput || !createVaultBtn || !addEntryForm || !showAddEntryBtn || !saveEntryBtn || !cancelAddBtn || !siteInput || !usernameInput || !passwordInput || !regEmailInput || !loginDiv || !loginEmailInput || !loginPasswordInput || !loginBtn) {
+    const login2FASection = document.getElementById("login2FASection");
+    const login2FATokenInput = document.getElementById("login2FAToken") as HTMLInputElement | null;
+    const syncBtn = document.getElementById("syncBtn");
+    const folderSelect = document.getElementById("folderSelect") as HTMLSelectElement | null;
+
+    if (!unlockBtn || !masterInput || !vaultDiv || !lockedDiv || !entriesUl || !registerDiv || !regPasswordInput || !createVaultBtn || !addEntryForm || !showAddEntryBtn || !saveEntryBtn || !cancelAddBtn || !siteInput || !usernameInput || !passwordInput || !regEmailInput || !loginDiv || !loginEmailInput || !loginPasswordInput || !loginBtn || !syncBtn || !folderSelect) {
       console.error("Required DOM elements not found");
       return;
     }
@@ -150,32 +155,69 @@ if (typeof document !== "undefined") {
     loginBtn?.addEventListener("click", async () => {
       const email = loginEmailInput.value;
       const password = loginPasswordInput.value;
+      const token = login2FATokenInput?.value;
       
       if (!email || !password) return alert("Required");
 
       try {
         loginBtn.innerText = "Syncing...";
-        const token = await loginAccount(email, password);
+        const authToken = await loginAccount(email, password, token);
+
+        // If login successful, hide 2FA just in case
+        login2FASection?.setAttribute("hidden", "");
 
         // Sync (First download)
-        await syncVaultWithCloud(token);
+        await syncVaultWithCloud(authToken);
         
         // Now try to unlock locally
         const encryptedVault = await loadVault();
         if (encryptedVault) {
-            const entries = await decryptVault(encryptedVault, password);
-            currentEntries = entries;
+            const vaultData = await decryptVault(encryptedVault, password);
+            currentEntries = vaultData.entries;
+            currentFolders = vaultData.folders || [];
             currentMaster = password;
-            renderEntries(entries, entriesUl);
+            renderEntries(currentEntries, entriesUl);
             loginDiv.hidden = true;
             vaultDiv.hidden = false;
         } else {
             alert("No vault found on cloud or local");
         }
       } catch(e: any) {
-        alert(e.message || "Login failed");
+        if (e.requires2FA) {
+            login2FASection?.removeAttribute("hidden");
+            login2FATokenInput?.focus();
+            alert("2FA Required. Please enter your code.");
+        } else {
+            alert(e.message || "Login failed");
+        }
       } finally {
         loginBtn.innerText = "Login & Sync";
+      }
+    });
+
+    syncBtn?.addEventListener("click", async () => {
+      try {
+        syncBtn.innerText = "⏳";
+        syncBtn.style.pointerEvents = "none";
+        // We need the token. For simplicity, we assume user is logged in if they can sync.
+        // loginAccount doesn't store token globally in library yet? 
+        // In web app it's in localStorage. 
+        const token = localStorage.getItem("pwmnger_token");
+        if (!token) throw new Error("Please log in again to sync.");
+        
+        await syncVaultWithCloud(token);
+        const updatedVault = await loadVault();
+        if (updatedVault) {
+           const entries = await decryptVault(updatedVault, currentMaster);
+           currentEntries = entries;
+           renderEntries(entries, entriesUl);
+           alert("Sync Success!");
+        }
+      } catch(e: any) {
+        alert(e.message || "Sync failed");
+      } finally {
+        syncBtn.innerText = "🔄";
+        syncBtn.style.pointerEvents = "auto";
       }
     });
 
@@ -185,12 +227,13 @@ if (typeof document !== "undefined") {
       if (!encryptedVault) return;
 
       try {
-        const entries = await decryptVault(encryptedVault, master);
-        currentEntries = entries;
+        const vaultData = await decryptVault(encryptedVault, master);
+        currentEntries = vaultData.entries;
+        currentFolders = vaultData.folders || [];
         currentMaster = master;
         currentSalt = new Uint8Array(encryptedVault.salt);
         
-        renderEntries(entries, entriesUl);
+        renderEntries(currentEntries, entriesUl);
         lockedDiv.hidden = true;
         vaultDiv.hidden = false;
       } catch {
@@ -209,6 +252,18 @@ if (typeof document !== "undefined") {
     showAddEntryBtn.addEventListener("click", async () => {
       vaultDiv.hidden = true;
       addEntryForm.hidden = false;
+      
+      // Populate folders
+      if (folderSelect) {
+        folderSelect.innerHTML = '<option value="">No Folder</option>';
+        currentFolders.forEach((f: any) => {
+             const opt = document.createElement("option");
+             opt.value = f.id;
+             opt.innerText = f.name;
+             folderSelect.appendChild(opt);
+        });
+      }
+
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (tab?.url) {
         siteInput.value = new URL(tab.url).hostname;
@@ -231,6 +286,7 @@ if (typeof document !== "undefined") {
         site: siteInput.value,
         username: usernameInput.value,
         password: passwordInput.value,
+        folderId: folderSelect?.value || undefined,
         createdAt: Date.now()
       });
 
@@ -252,12 +308,28 @@ if (typeof document !== "undefined") {
       }
     });
 
+    let currentFolders: any[] = [];
+
+    async function updateVaultData() {
+        const encryptedVault = await loadVault();
+        if (encryptedVault && currentMaster) {
+            const vaultData = await decryptVault(encryptedVault, currentMaster);
+            currentEntries = vaultData.entries;
+            currentFolders = vaultData.folders || [];
+        }
+    }
+
     function renderEntries(entries: any[], container: HTMLElement) {
       container.innerHTML = "";
       for (const entry of entries) {
+        const folder = currentFolders.find(f => f.id === entry.folderId);
+        const folderLabel = folder ? `<span style="font-size: 10px; color: var(--primary); background: #e6f7ff; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">${folder.name}</span>` : "";
+
         const li = document.createElement("li");
         li.innerHTML = `
-          <div class="site">${entry.site}</div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="site">${entry.site} ${folderLabel}</div>
+          </div>
           <div class="user">${entry.username}</div>
         `;
         li.onclick = () => {
@@ -270,5 +342,8 @@ if (typeof document !== "undefined") {
         container.appendChild(li);
       }
     }
+
+    // Initial load
+    await updateVaultData();
   });
 }

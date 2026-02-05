@@ -224,15 +224,41 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({
            
            <Button variant="secondary" onClick={() => {
               import("@pwmnger/app-logic").then(({ analyzeVaultHealth }) => {
-                const report = analyzeVaultHealth(vault as any); // Cast for full vault access
+                const report = analyzeVaultHealth(vault); 
                 const msg = `Vault Health Score: ${report.score}/100\n` +
                             `Weak Passwords: ${report.weakCount}\n` +
                             `Reused Passwords: ${report.reusedCount}`;
-                alert(msg); // Simple alert for v1
-                // Ideally this opens a modal, but alert satisfies requirement for now without big UI change
+                alert(msg);
               });
            }}>
              Check Health
+           </Button>
+
+           <Button variant="secondary" onClick={() => {
+              import("@pwmnger/app-logic").then(async ({ exportRecoveryData }) => {
+                try {
+                  const data = await exportRecoveryData();
+                  const content = `PwmngerTS EMERGENCY RECOVERY KIT\n` +
+                                 `-------------------------------\n` +
+                                 `Recovery Key: ${data.recoveryKey}\n` +
+                                 `Encrypted Vault Key: ${JSON.stringify(data.encryptedVaultKey)}\n\n` +
+                                 `INSTRUCTIONS:\n` +
+                                 `Store this file securely. If you lose your Master Password, this key\n` +
+                                 `can be used to recover your vault data.`;
+                  
+                  const blob = new Blob([content], { type: "text/plain" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `pwmnger-recovery-kit.txt`;
+                  a.click();
+                  setToast({ message: "Recovery Kit downloaded! Keep it safe.", type: "success" });
+                } catch(e: any) {
+                  setToast({ message: "Recovery Kit generation failed: " + e.message, type: "error" });
+                }
+              });
+           }}>
+             Download Recovery Kit
            </Button>
          </div>
 
