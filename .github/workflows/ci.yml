@@ -1,4 +1,4 @@
-name: CI
+name: CI Pipeline
 
 on:
   push:
@@ -11,26 +11,37 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-    - uses: pnpm/action-setup@v2
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
       with:
-        version: 9
+        version: 10
 
-    - name: Use Node.js
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '23.x'
+        node-version: '23'
         cache: 'pnpm'
 
     - name: Install dependencies
       run: pnpm install
 
-    - name: Build
-      run: pnpm -r build
+    - name: Generate Prisma Client
+      run: pnpm --filter backend exec prisma generate
 
-    - name: Test
-      run: pnpm test
+    - name: Type check
+      run: pnpm -r typecheck
 
     - name: Lint
       run: pnpm -r lint --if-present
+
+    - name: Run tests
+      run: pnpm test
+
+    - name: Build project
+      run: pnpm -r build
+
+    - name: Verify Extension Build
+      run: ls -R apps/extension/dist
