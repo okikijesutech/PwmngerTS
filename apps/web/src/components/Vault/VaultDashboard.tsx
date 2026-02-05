@@ -1,21 +1,13 @@
+import React, { useState, useMemo } from "react";
+import { Button, Input, Toast } from "@pwmnger/ui";
+import { AddEntryForm } from "./AddEntryForm";
+import { EntryList } from "./EntryList";
 import { TwoFactorSetup } from "./TwoFactorSetup";
-// Note: imports need to be at top, but replace_file_content chunking might make this hard if I don't target top.
-// I'll add the Render Logic here and assume I can fix imports separately or use dynamic import in a clean way.
-// Ideally, strict TS won't like inline imports in render.
-// I will target the top of the file to add import, and then the body to add state/render.
-// Let's do state/render first but without the import it will fail.
-// So I will use 2 tool calls or a multi-replace.
-// I'll use multi-replace.
-
-// Wait, I am restricted to 1 tool call per turn? No, I can do multiple.
-// I'll use separate calls for safety. First imports, then logic.
-// Actually, `replace_file_content` documentation says "Do NOT make multiple parallel calls to this tool ... for the same file".
-// So I MUST use `multi_replace_file_content`.
-
-// Let's do multi-replace on `VaultDashboard.tsx`.
+import { copyWithAutoClear } from "../../utils/clipboard";
+import type { Vault } from "@pwmnger/vault";
 
 interface VaultDashboardProps {
-  vault: { entries: any[] };
+  vault: Vault;
   onSync: () => void;
   onLock: () => void;
   onAddEntry: (site: string, username: string, password: string) => void;
@@ -27,14 +19,12 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({
   vault, onSync, onLock, onAddEntry, onDeleteEntry, isSyncing 
 }) => {
   const [search, setSearch] = useState("");
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null); // null = All
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  // Cast vault to full type to access folders
-  const fullVault = vault as any; // Temporary cast until strict types propagate
-  const folders = fullVault.folders || [];
+  const folders = vault.folders || [];
 
   const handleCopy = (password: string) => {
     copyWithAutoClear(password);
@@ -48,12 +38,6 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({
       await createFolder(newFolderName);
       setNewFolderName("");
       setToast({ message: "Folder created", type: "success" });
-      // Force refresh or assume generic update trigger? 
-      // In this architecture, we might need to trigger a parent re-render or relies on internal state sharing?
-      // For v1, simpler to reload or notify parent. 
-      // Ideally, onSync() fetches fresh data, but local changes might need state lift.
-      // We will rely on window reload for quick sync or prop callbacks if we had them.
-      // Let's rely on a window reload for "New Folder" for now to update the vault prop from App.tsx re-fetch.
       window.location.reload(); 
     } catch (e: any) {
       setToast({ message: "Failed to create folder", type: "error" });
@@ -72,13 +56,19 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({
     }
   };
 
-  // Filter entries
-  const filteredEntries = vault.entries.filter((e: any) => {
-    const matchesSearch = e.site.toLowerCase().includes(search.toLowerCase()) || 
-                          e.username.toLowerCase().includes(search.toLowerCase());
-    const matchesFolder = selectedFolderId ? e.folderId === selectedFolderId : true;
-    return matchesSearch && matchesFolder;
-  });
+  const filteredEntries = useMemo(() => {
+    let items = vault.entries.filter(
+      (e) =>
+        e.site.toLowerCase().includes(search.toLowerCase()) ||
+        e.username.toLowerCase().includes(search.toLowerCase())
+    );
+
+    if (selectedFolderId) {
+      items = items.filter((e) => e.folderId === selectedFolderId);
+    }
+
+    return items;
+  }, [vault.entries, search, selectedFolderId]);
 
   return (
     <div>

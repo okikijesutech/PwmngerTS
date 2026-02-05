@@ -1,3 +1,4 @@
+// @ts-ignore
 import { authenticator } from "otplib";
 import { toDataURL } from "qrcode";
 import { prisma } from "../db/prisma";

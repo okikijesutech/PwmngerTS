@@ -1,4 +1,4 @@
-import { Vault, VaultEntry } from "@pwmnger/vault";
+import type { Vault, VaultEntry } from "@pwmnger/vault";
 
 export interface HealthReport {
   totalEntries: number;
