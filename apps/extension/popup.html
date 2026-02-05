@@ -1,54 +1,78 @@
 <!doctype html>
 <html>
   <head>
+    <meta charset="UTF-8">
     <link rel="stylesheet" href="src/popup/popup.css" />
   </head>
   <body>
-    <div id="register" hidden>
-      <h2>Create Vault</h2>
-      <input type="password" id="regPassword" placeholder="Set Master Password" />
-      <button id="createVaultBtn">Create</button>
+    <div id="login" class="glass-card" hidden>
+      <h2>Login to Account</h2>
+      <p>Enter your credentials to sync your cloud vault.</p>
+      <input type="email" id="loginEmail" placeholder="Email Address" />
+      <input type="password" id="loginPassword" placeholder="Master Password" />
+      <button id="loginBtn">Login & Sync</button>
+      <p style="font-size: 12px; margin-top: 10px; text-align: center;">
+        New user? <a href="#" id="showRegisterLink">Create Vault</a>
+      </p>
     </div>
 
-    <div id="locked" hidden>
-      <input
-        type="password"
-        id="masterPassword"
-        placeholder="Master password"
-      />
-      <button id="unlockBtn">Unlock</button>
+    <div id="register" class="glass-card" hidden>
+      <h2>Secure Your Vault</h2>
+      <p>Create a master password. This is the <strong>only way</strong> to access your data.</p>
+      <input type="email" id="regEmail" placeholder="Email Address" />
+      <input type="password" id="regPassword" placeholder="New Master Password" />
+      <div id="regStrengthMeter" class="strength-meter">
+        <div id="regStrengthBar" class="strength-bar"></div>
+      </div>
+      <div id="regStrengthText" class="strength-text">None</div>
+      <button id="createVaultBtn" disabled>Create & Unlock</button>
+      <p style="font-size: 12px; margin-top: 10px; text-align: center;">
+        Existing user? <a href="#" id="showLoginLink">Login</a>
+      </p>
+    </div>
+
+    <div id="locked" class="glass-card" hidden>
+      <h2>PwmngerTS</h2>
+      <p>Enter your master password to unlock.</p>
+      <input type="password" id="masterPassword" placeholder="Master password" autofocus />
+      <button id="unlockBtn">Unlock Vault</button>
     </div>
 
     <div id="vault" hidden>
-      <div class="vault-header">
-        <input type="text" id="search" placeholder="Search..." />
-        <button id="showAddEntryBtn" class="fab">+</button>
+      <div class="glass-card">
+        <div class="vault-header">
+          <input type="text" id="searchInput" placeholder="Search entries..." />
+          <button id="showAddEntryBtn" class="fab">+</button>
+        </div>
+        <ul id="entries"></ul>
       </div>
-      <ul id="entries"></ul>
     </div>
 
-    <div id="add-entry-form" hidden>
-      <h3>Add New Entry</h3>
+    <div id="add-entry-form" class="glass-card" hidden>
+      <h2>Add New Entry</h2>
       <input type="text" id="siteInput" placeholder="Site (e.g. google.com)" />
       <input type="text" id="usernameInput" placeholder="Username" />
       <input type="password" id="passwordInput" placeholder="Password" />
       <div class="button-group">
         <button id="saveEntryBtn">Save</button>
-        <button id="cancelAddBtn" class="secondary">Cancel</button>
+        <button id="cancelAddBtn" style="background: #8c8c8c">Cancel</button>
       </div>
     </div>
 
-    <section id="generator">
-      <h3>Generate Password</h3>
-      <input type="number" id="length" value="16" min="12" />
-      <button id="generate">Generate</button>
-      <input type="text" id="generatedPassword" readonly />
-      <div id="strength"></div>
+    <section id="generator" class="glass-card" style="margin-top: 12px; padding: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h3 style="margin: 0; font-size: 12px;">Generator</h3>
+        <input type="number" id="length" value="16" min="12" style="width: 50px; margin: 0; padding: 4px;" />
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="generatedPassword" readonly style="margin: 0;" />
+        <button id="generate" style="margin: 0; width: auto; padding: 4px 12px;">Go</button>
+      </div>
     </section>
 
     <script type="module" src="src/popup/popup.ts"></script>
-    <footer class="experimental-warning">
-      Experimental: Use at your own risk.
-    </footer>
+    <div class="experimental-warning">
+      Zero-Knowledge &bull; v0.1.0
+    </div>
   </body>
 </html>

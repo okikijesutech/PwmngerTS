@@ -4,6 +4,7 @@ export type VaultEntry = {
   username: string;
   password: string;
   notes?: string;
+  lastModified: number;
 };
 
 export type Vault = {

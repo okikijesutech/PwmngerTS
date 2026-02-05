@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { register, login } from "../controllers/authController.js";
+import { register, login } from "../controllers/authController";
 
 import { body, validationResult } from "express-validator";
 import rateLimit from "express-rate-limit";
 import type { Request, Response, NextFunction } from "express";
 
-const router = Router();
+const router: Router = Router();
 
 const authLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
@@ -23,7 +23,7 @@ const validate = (req: Request, res: Response, next: NextFunction) => {
 
 const registerValidation = [
   body("email").isEmail().withMessage("Invalid email"),
-  body("password").isLength({ min: 8 }).withMessage("Password too short (min 8 chars)"),
+  body("authHash").isLength({ min: 32 }).withMessage("Invalid auth hash format"),
 ];
 
 router.post("/register", authLimiter, registerValidation, validate, register);

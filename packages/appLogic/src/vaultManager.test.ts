@@ -13,6 +13,8 @@ jest.mock("@pwmnger/crypto", () => ({
   decryptData: jest.fn(),
   encryptData: jest.fn(),
   generateVaultKey: jest.fn(),
+  wrapKey: jest.fn(),
+  unwrapKey: jest.fn(),
 }));
 jest.mock("@pwmnger/vault", () => ({
   createEmptyVault: jest.fn(),
@@ -22,7 +24,7 @@ jest.mock("@pwmnger/storage", () => ({
   loadVault: jest.fn(),
 }));
 
-import { deriveMasterKey, decryptData, encryptData, generateVaultKey } from "@pwmnger/crypto";
+import { deriveMasterKey, decryptData, encryptData, generateVaultKey, wrapKey, unwrapKey } from "@pwmnger/crypto";
 import { createEmptyVault } from "@pwmnger/vault";
 import { saveVault, loadVault } from "@pwmnger/storage";
 
@@ -66,9 +68,8 @@ describe("VaultManager", () => {
         encryptedVaultKey: mockEncryptedPayload,
       });
       (deriveMasterKey as jest.Mock).mockResolvedValue(mockMasterKey);
-      (decryptData as jest.Mock)
-        .mockResolvedValueOnce(mockVaultKey)
-        .mockResolvedValueOnce(mockVault);
+      (unwrapKey as jest.Mock).mockResolvedValue(mockVaultKey);
+      (decryptData as jest.Mock).mockResolvedValue(mockVault);
 
       await unlockVault(mockPassword);
       expect(isUnlocked()).toBe(true);
@@ -87,9 +88,8 @@ describe("VaultManager", () => {
         encryptedVaultKey: mockEncryptedPayload,
       });
       (deriveMasterKey as jest.Mock).mockResolvedValue(mockMasterKey);
-      (decryptData as jest.Mock)
-        .mockResolvedValueOnce(mockVaultKey)
-        .mockResolvedValueOnce(mockVault);
+      (unwrapKey as jest.Mock).mockResolvedValue(mockVaultKey);
+      (decryptData as jest.Mock).mockResolvedValue(mockVault);
 
       await unlockVault(mockPassword);
       const vault = getVault();
@@ -106,9 +106,8 @@ describe("VaultManager", () => {
         encryptedVaultKey: mockEncryptedPayload,
       });
       (deriveMasterKey as jest.Mock).mockResolvedValue(mockMasterKey);
-      (decryptData as jest.Mock)
-        .mockResolvedValueOnce(mockVaultKey)
-        .mockResolvedValueOnce(mockVault);
+      (unwrapKey as jest.Mock).mockResolvedValue(mockVaultKey);
+      (decryptData as jest.Mock).mockResolvedValue(mockVault);
 
       await unlockVault(mockPassword);
       expect(isUnlocked()).toBe(true);
@@ -125,9 +124,8 @@ describe("VaultManager", () => {
       (deriveMasterKey as jest.Mock).mockResolvedValue(mockMasterKey);
       (generateVaultKey as jest.Mock).mockResolvedValue(mockVaultKey);
       (createEmptyVault as jest.Mock).mockReturnValue(mockVault);
-      (encryptData as jest.Mock)
-        .mockResolvedValueOnce(mockEncryptedPayload)
-        .mockResolvedValueOnce(mockEncryptedPayload);
+      (encryptData as jest.Mock).mockResolvedValue(mockEncryptedPayload);
+      (wrapKey as jest.Mock).mockResolvedValue(mockEncryptedPayload);
 
       await createNewVault(mockPassword);
 
@@ -137,11 +135,13 @@ describe("VaultManager", () => {
       );
       expect(generateVaultKey).toHaveBeenCalled();
       expect(createEmptyVault).toHaveBeenCalled();
-      expect(encryptData).toHaveBeenCalledTimes(2);
+      expect(encryptData).toHaveBeenCalledTimes(1);
+      expect(wrapKey).toHaveBeenCalledTimes(1);
       expect(saveVault).toHaveBeenCalledWith({
         salt: expect.any(Array),
         encryptedVault: mockEncryptedPayload,
         encryptedVaultKey: mockEncryptedPayload,
+        updatedAt: expect.any(Number),
       });
       expect(isUnlocked()).toBe(true);
     });
@@ -161,7 +161,7 @@ describe("VaultManager", () => {
         encryptedVaultKey: mockEncryptedPayload,
       });
       (deriveMasterKey as jest.Mock).mockResolvedValue(mockMasterKey);
-      (decryptData as jest.Mock).mockResolvedValueOnce(null);
+      (unwrapKey as jest.Mock).mockResolvedValue(null);
 
       await expect(unlockVault(mockPassword)).rejects.toThrow(
         "Failed to decrypt vault key",
@@ -175,9 +175,8 @@ describe("VaultManager", () => {
         encryptedVaultKey: mockEncryptedPayload,
       });
       (deriveMasterKey as jest.Mock).mockResolvedValue(mockMasterKey);
-      (decryptData as jest.Mock)
-        .mockResolvedValueOnce(mockVaultKey)
-        .mockResolvedValueOnce(mockVault);
+      (unwrapKey as jest.Mock).mockResolvedValue(mockVaultKey);
+      (decryptData as jest.Mock).mockResolvedValue(mockVault);
 
       await unlockVault(mockPassword);
 
@@ -185,7 +184,8 @@ describe("VaultManager", () => {
         mockPassword,
         expect.any(Uint8Array),
       );
-      expect(decryptData).toHaveBeenCalledTimes(2);
+      expect(decryptData).toHaveBeenCalledTimes(1);
+      expect(unwrapKey).toHaveBeenCalledTimes(1);
       expect(isUnlocked()).toBe(true);
       expect(getVault()).toEqual(mockVault);
     });
@@ -270,9 +270,8 @@ describe("VaultManager", () => {
         encryptedVaultKey: mockEncryptedPayload,
       });
       (deriveMasterKey as jest.Mock).mockResolvedValue(mockMasterKey);
-      (decryptData as jest.Mock)
-        .mockResolvedValueOnce(mockVaultKey)
-        .mockResolvedValueOnce(mockVault);
+      (unwrapKey as jest.Mock).mockResolvedValue(mockVaultKey);
+      (decryptData as jest.Mock).mockResolvedValue(mockVault);
 
       await unlockVault(mockPassword);
 
@@ -295,6 +294,7 @@ describe("VaultManager", () => {
         salt: expect.any(Array),
         encryptedVault: mockEncryptedPayload,
         encryptedVaultKey: mockEncryptedPayload,
+        updatedAt: expect.any(Number),
       });
     });
 
@@ -308,15 +308,41 @@ describe("VaultManager", () => {
         })
         .mockResolvedValueOnce(null);
       (deriveMasterKey as jest.Mock).mockResolvedValue(mockMasterKey);
-      (decryptData as jest.Mock)
-        .mockResolvedValueOnce(mockVaultKey)
-        .mockResolvedValueOnce(mockVault);
+      (unwrapKey as jest.Mock).mockResolvedValue(mockVaultKey);
+      (decryptData as jest.Mock).mockResolvedValue(mockVault);
 
       await unlockVault(mockPassword);
 
       (encryptData as jest.Mock).mockResolvedValue(mockEncryptedPayload);
 
       await expect(saveCurrentVault()).rejects.toThrow("No vault to update");
+    });
+  });
+
+  describe("mergeVaults", () => {
+    it("should merge local and remote entries based on lastModified", () => {
+      const { mergeVaults } = require("./vaultManager");
+      const localVault = {
+        version: 1,
+        updatedAt: 100,
+        entries: [
+          { id: "1", site: "local", username: "u1", password: "p1", lastModified: 100 },
+          { id: "2", site: "conflict", username: "u2", password: "local-win", lastModified: 300 },
+        ],
+      };
+      const remoteVault = {
+        version: 1,
+        updatedAt: 200,
+        entries: [
+          { id: "2", site: "conflict", username: "u2", password: "remote-lose", lastModified: 200 },
+          { id: "3", site: "remote", username: "u3", password: "p3", lastModified: 200 },
+        ],
+      };
+
+      const result = mergeVaults(localVault, remoteVault);
+      expect(result.entries).toHaveLength(3);
+      expect(result.entries.find((e: any) => e.id === "2")?.password).toBe("local-win");
+      expect(result.updatedAt).toBe(200);
     });
   });
 });

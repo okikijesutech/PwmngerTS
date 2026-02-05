@@ -26,6 +26,7 @@ describe("Integration Tests (Crypto + Vault)", () => {
       site: "bank.example.com",
       username: "user@example.com",
       password: "SecurePin1234!",
+      lastModified: Date.now(),
     });
 
     const encryptedVault = await encryptData(masterKey, vault);
@@ -38,7 +39,7 @@ describe("Integration Tests (Crypto + Vault)", () => {
     } as any)) as Vault;
 
     expect(decryptedVault.entries.length).toBe(1);
-    expect(decryptedVault.entries[0].site).toBe("bank.example.com");
+    expect(decryptedVault.entries[0]!.site).toBe("bank.example.com");
   });
 
   test("Test 6: Access Control - Wrong Password", async () => {
@@ -60,6 +61,7 @@ describe("Integration Tests (Crypto + Vault)", () => {
         site: `site-${i}.com`,
         username: `user-${i}`,
         password: `pass-${i}`,
+        lastModified: Date.now(),
       });
     }
 

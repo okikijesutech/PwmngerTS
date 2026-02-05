@@ -1,18 +1,32 @@
 import { loadVault, saveVault } from "../storage/vaultStorage";
 import { decryptVault, createEncryptedVault, encryptVault } from "../crypto/cryptoBridge";
-import { EncryptedVault } from "@pwmnger/vault";
+import { passwordStrength } from "../password/strength";
+import { loginAccount, registerAccount, syncVaultWithCloud } from "@pwmnger/app-logic";
 
 if (typeof document !== "undefined") {
   document.addEventListener("DOMContentLoaded", async () => {
-  const unlockBtn = document.getElementById("unlockBtn");
-  const masterInput = document.getElementById("masterPassword") as HTMLInputElement | null;
-  const vaultDiv = document.getElementById("vault");
-  const lockedDiv = document.getElementById("locked");
-  const entriesUl = document.getElementById("entries");
-  
+    const unlockBtn = document.getElementById("unlockBtn");
+    const masterInput = document.getElementById("masterPassword") as HTMLInputElement | null;
+    const vaultDiv = document.getElementById("vault");
+    const lockedDiv = document.getElementById("locked");
+    const entriesUl = document.getElementById("entries");
+    const searchInput = document.getElementById("searchInput") as HTMLInputElement | null;
+
     const registerDiv = document.getElementById("register");
+    const regEmailInput = document.getElementById("regEmail") as HTMLInputElement | null;
     const regPasswordInput = document.getElementById("regPassword") as HTMLInputElement | null;
-    const createVaultBtn = document.getElementById("createVaultBtn");
+    const createVaultBtn = document.getElementById("createVaultBtn") as HTMLButtonElement | null;
+    const showLoginLink = document.getElementById("showLoginLink");
+
+    const loginDiv = document.getElementById("login");
+    const loginEmailInput = document.getElementById("loginEmail") as HTMLInputElement | null;
+    const loginPasswordInput = document.getElementById("loginPassword") as HTMLInputElement | null;
+    const loginBtn = document.getElementById("loginBtn") as HTMLButtonElement | null;
+    const showRegisterLink = document.getElementById("showRegisterLink");
+    
+    // Strength meter elements
+    const strengthBar = document.getElementById("regStrengthBar");
+    const strengthText = document.getElementById("regStrengthText");
 
     // Add Entry elements
     const addEntryForm = document.getElementById("add-entry-form");
@@ -27,72 +41,148 @@ if (typeof document !== "undefined") {
     let currentMaster: string = "";
     let currentSalt: Uint8Array | null = null;
 
-    if (!unlockBtn || !masterInput || !vaultDiv || !lockedDiv || !entriesUl || !registerDiv || !regPasswordInput || !createVaultBtn || !addEntryForm || !showAddEntryBtn || !saveEntryBtn || !cancelAddBtn || !siteInput || !usernameInput || !passwordInput) {
+    if (!unlockBtn || !masterInput || !vaultDiv || !lockedDiv || !entriesUl || !registerDiv || !regPasswordInput || !createVaultBtn || !addEntryForm || !showAddEntryBtn || !saveEntryBtn || !cancelAddBtn || !siteInput || !usernameInput || !passwordInput || !regEmailInput || !loginDiv || !loginEmailInput || !loginPasswordInput || !loginBtn) {
       console.error("Required DOM elements not found");
       return;
     }
 
-  // Generator elements
-  const generateBtn = document.getElementById("generate");
-  const lengthInput = document.getElementById("length") as HTMLInputElement | null;
-  const generatedOutput = document.getElementById("generatedPassword") as HTMLInputElement | null;
+    // Password strength colors
+    const getStrengthInfo = (password: string) => {
+      if (!password) return { width: '0%', color: '#eee', label: 'None' };
+      const score = passwordStrength(password);
 
-  if (generateBtn && lengthInput && generatedOutput) {
-    generateBtn.addEventListener("click", () => {
-      const length = parseInt(lengthInput.value, 10) || 16;
-      const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
-      const randomValues = crypto.getRandomValues(new Uint32Array(length));
-      let password = "";
-      for (let i = 0; i < length; i++) {
-        password += charset[randomValues[i]! % charset.length];
+      if (score < 2) return { width: '20%', color: '#ff4d4f', label: 'Weak' };
+      if (score < 3) return { width: '40%', color: '#faad14', label: 'Fair' };
+      if (score < 5) return { width: '60%', color: '#52c41a', label: 'Good' };
+      if (score < 6) return { width: '80%', color: '#1890ff', label: 'Strong' };
+      return { width: '100%', color: '#1890ff', label: 'Very Strong' };
+    };
+
+    regPasswordInput.addEventListener("input", () => {
+      const info = getStrengthInfo(regPasswordInput.value);
+      if (strengthBar) {
+        strengthBar.style.width = info.width;
+        strengthBar.style.backgroundColor = info.color;
       }
-      generatedOutput.value = password;
-      navigator.clipboard.writeText(password);
+      if (strengthText) {
+        strengthText.innerText = info.label;
+        strengthText.style.color = info.color;
+      }
+      createVaultBtn.disabled = regPasswordInput.value.length < 8;
     });
-  }
 
-  // Initial Check
-  try {
+    // Generator logic
+    const generateBtn = document.getElementById("generate");
+    const lengthInput = document.getElementById("length") as HTMLInputElement | null;
+    const generatedOutput = document.getElementById("generatedPassword") as HTMLInputElement | null;
+
+    if (generateBtn && lengthInput && generatedOutput) {
+      generateBtn.addEventListener("click", () => {
+        const length = parseInt(lengthInput.value, 10) || 16;
+        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+        const randomValues = crypto.getRandomValues(new Uint32Array(length));
+        let password = "";
+        for (let i = 0; i < length; i++) {
+          password += charset[randomValues[i]! % charset.length];
+        }
+        generatedOutput.value = password;
+        navigator.clipboard.writeText(password);
+      });
+    }
+
+    // Initial Vault Check
     const existingVault = await loadVault();
     if (existingVault) {
       lockedDiv.hidden = false;
     } else {
+      loginDiv.hidden = false; // Default to Login for new installs
+    }
+
+    // Switch Views
+    showRegisterLink?.addEventListener("click", () => {
+      loginDiv.hidden = true;
       registerDiv.hidden = false;
-    }
-  } catch (err) {
-    console.error("Failed to load vault:", err);
-    registerDiv.hidden = false; // Fallback
-  }
+    });
 
-  // Handle Create Vault
-  createVaultBtn.addEventListener("click", async () => {
-    const password = regPasswordInput.value;
-    if (password.length < 8) {
-      alert("Password must be at least 8 characters");
-      return;
-    }
-
-    try {
-      const newVault = await createEncryptedVault(password);
-      await saveVault(newVault);
-      alert("Vault created! Please unlock it.");
+    showLoginLink?.addEventListener("click", () => {
       registerDiv.hidden = true;
-      lockedDiv.hidden = false;
-    } catch (e) {
-      console.error(e);
-      alert("Failed to create vault");
-    }
-  });
+      loginDiv.hidden = false;
+    });
+
+    // Create (Register) logic
+    createVaultBtn.addEventListener("click", async () => {
+      const email = regEmailInput.value;
+      const password = regPasswordInput.value;
+
+      if (!email || !password) return alert("Email and Password required");
+
+      try {
+        createVaultBtn.disabled = true;
+        createVaultBtn.innerText = "Creating...";
+
+        await registerAccount(email, password); // Zero-Knowledge Reg
+
+        const newVault = await createEncryptedVault(password);
+        await saveVault(newVault);
+        
+        // Auto-login to get token
+        const token = await loginAccount(email, password);
+        await syncVaultWithCloud(token);
+
+        // Auto-unlock
+        const entries = await decryptVault(newVault, password);
+        currentEntries = entries;
+        currentMaster = password;
+        currentSalt = new Uint8Array(newVault.salt);
+        
+        renderEntries(entries, entriesUl);
+        registerDiv.hidden = true;
+        vaultDiv.hidden = false;
+      } catch (e: any) {
+        console.error(e);
+        alert(e.message || "Failed to create vault");
+        createVaultBtn.disabled = false;
+        createVaultBtn.innerText = "Create & Unlock";
+      }
+    });
+
+    // Login logic
+    loginBtn?.addEventListener("click", async () => {
+      const email = loginEmailInput.value;
+      const password = loginPasswordInput.value;
+      
+      if (!email || !password) return alert("Required");
+
+      try {
+        loginBtn.innerText = "Syncing...";
+        const token = await loginAccount(email, password);
+
+        // Sync (First download)
+        await syncVaultWithCloud(token);
+        
+        // Now try to unlock locally
+        const encryptedVault = await loadVault();
+        if (encryptedVault) {
+            const entries = await decryptVault(encryptedVault, password);
+            currentEntries = entries;
+            currentMaster = password;
+            renderEntries(entries, entriesUl);
+            loginDiv.hidden = true;
+            vaultDiv.hidden = false;
+        } else {
+            alert("No vault found on cloud or local");
+        }
+      } catch(e: any) {
+        alert(e.message || "Login failed");
+      } finally {
+        loginBtn.innerText = "Login & Sync";
+      }
+    });
 
     unlockBtn.addEventListener("click", async () => {
-      const master = (masterInput as HTMLInputElement).value;
+      const master = masterInput.value;
       const encryptedVault = await loadVault();
-
-      if (!encryptedVault) {
-        registerDiv.hidden = false;
-        lockedDiv.hidden = true;
-        return;
-      }
+      if (!encryptedVault) return;
 
       try {
         const entries = await decryptVault(encryptedVault, master);
@@ -108,20 +198,20 @@ if (typeof document !== "undefined") {
       }
     });
 
-    // Add Entry Logic
+    searchInput?.addEventListener("input", () => {
+      const filtered = currentEntries.filter(e => 
+        e.site.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+        e.username.toLowerCase().includes(searchInput.value.toLowerCase())
+      );
+      renderEntries(filtered, entriesUl);
+    });
+
     showAddEntryBtn.addEventListener("click", async () => {
       vaultDiv.hidden = true;
       addEntryForm.hidden = false;
-
-      // Detect current site
-      try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (tab?.url) {
-          const url = new URL(tab.url);
-          siteInput.value = url.hostname;
-        }
-      } catch (e) {
-        console.error("Failed to detect tab:", e);
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.url) {
+        siteInput.value = new URL(tab.url).hostname;
       }
     });
 
@@ -131,24 +221,18 @@ if (typeof document !== "undefined") {
     });
 
     saveEntryBtn.addEventListener("click", async () => {
-      const site = siteInput.value;
-      const username = usernameInput.value;
-      const password = passwordInput.value;
-
-      if (!site || !username || !password) {
+      if (!siteInput.value || !usernameInput.value || !passwordInput.value) {
         alert("All fields are required");
         return;
       }
 
-      const newEntry = {
+      currentEntries.push({
         id: crypto.randomUUID(),
-        site,
-        username,
-        password,
+        site: siteInput.value,
+        username: usernameInput.value,
+        password: passwordInput.value,
         createdAt: Date.now()
-      };
-
-      currentEntries.push(newEntry);
+      });
 
       try {
         if (!currentSalt) throw new Error("Salt missing");
@@ -159,7 +243,6 @@ if (typeof document !== "undefined") {
         addEntryForm.hidden = true;
         vaultDiv.hidden = false;
         
-        // Reset form
         siteInput.value = "";
         usernameInput.value = "";
         passwordInput.value = "";
@@ -169,33 +252,23 @@ if (typeof document !== "undefined") {
       }
     });
 
-function renderEntries(entries: any[], container: HTMLElement) {
-  container.innerHTML = "";
-  for (const entry of entries) {
-    const li = document.createElement("li");
-    li.textContent = `${entry.site} — ${entry.username}`;
-    li.onclick = () => copyToClipboard(entry.password);
-    container.appendChild(li);
-  }
-}
-
-function copyToClipboard(text: string) {
-  navigator.clipboard.writeText(text);
-  setTimeout(() => navigator.clipboard.writeText(""), 7000);
-}
-
-
-});
-}
-
-export function passwordStrength(password: string): number {
-  let score = 0;
-
-  if (password.length >= 12) score++;
-  if (/[a-z]/.test(password)) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^a-zA-Z0-9]/.test(password)) score++;
-
-  return score; // 0–5
+    function renderEntries(entries: any[], container: HTMLElement) {
+      container.innerHTML = "";
+      for (const entry of entries) {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <div class="site">${entry.site}</div>
+          <div class="user">${entry.username}</div>
+        `;
+        li.onclick = () => {
+          navigator.clipboard.writeText(entry.password);
+          const originalText = li.innerHTML;
+          li.innerHTML = '<div style="color: var(--primary); font-weight: bold; text-align: center;">Copied!</div>';
+          setTimeout(() => li.innerHTML = originalText, 2000);
+          setTimeout(() => navigator.clipboard.writeText(""), 30000);
+        };
+        container.appendChild(li);
+      }
+    }
+  });
 }

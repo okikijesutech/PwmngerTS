@@ -2,10 +2,10 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import authRoutes from "./routes/auth.js";
-import vaultRoutes from "./routes/vault.js";
+import authRoutes from "./routes/auth";
+import vaultRoutes from "./routes/vault";
 
-const app = express();
+const app: express.Application = express();
 
 app.use(helmet());
 

@@ -20,6 +20,7 @@
     "@pwmnger/crypto": "file:../../packages/crypto",
     "@pwmnger/vault": "file:../../packages/vault",
     "@pwmnger/storage": "file:../../packages/storage",
-    "@pwmnger/ui": "file:../../packages/ui"
+    "@pwmnger/ui": "file:../../packages/ui",
+    "@pwmnger/app-logic": "file:../../packages/appLogic"
   }
 }

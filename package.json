@@ -1,10 +1,33 @@
 {
   "name": "pwmngerts",
   "version": "0.2.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
+  "description": "Zero-knowledge, cross-platform password manager built with TypeScript",
+  "author": {
+    "name": "PwmngerTS Contributors",
+    "url": "https://github.com/okikijesutech/PwmngerTS"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/okikijesutech/PwmngerTS.git"
+  },
+  "bugs": {
+    "url": "https://github.com/okikijesutech/PwmngerTS/issues"
+  },
+  "homepage": "https://github.com/okikijesutech/PwmngerTS#readme",
+  "keywords": [
+    "password-manager",
+    "zero-knowledge",
+    "encryption",
+    "security",
+    "typescript",
+    "monorepo",
+    "argon2",
+    "aes-gcm"
+  ],
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
   },
   "workspaces": [
     "apps/*",
@@ -19,19 +42,24 @@
     "test:storage": "jest packages/storage/src",
     "test:all": "jest",
     "test": "jest",
-    "build": "npm run build --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "version": "echo 'Release manual tagging: git tag -a v%npm_package_version% -m \"Release v%npm_package_version%\"' && npm version"
+    "build": "pnpm -r --if-present run build",
+    "lint": "pnpm -r --if-present run lint",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "prepare": "husky"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@commitlint/cli": "^20.4.1",
+    "@commitlint/config-conventional": "^20.4.1",
     "@types/chrome": "^0.1.36",
     "@types/jest": "^29.5.14",
+    "@types/node": "^25.2.0",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"

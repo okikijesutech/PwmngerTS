@@ -11,4 +11,11 @@ module.exports = {
   ],
   coveragePathIgnorePatterns: ["/node_modules/", "test.ts"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
+  moduleNameMapper: {
+    "^@pwmnger/crypto$": "<rootDir>/packages/crypto/src",
+    "^@pwmnger/vault$": "<rootDir>/packages/vault/src",
+    "^@pwmnger/storage$": "<rootDir>/packages/storage/src",
+    "^@pwmnger/app-logic$": "<rootDir>/packages/appLogic/src",
+    "^@pwmnger/ui$": "<rootDir>/packages/ui/src",
+  },
 };

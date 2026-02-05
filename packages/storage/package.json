@@ -1,7 +1,19 @@
 {
   "name": "@pwmnger/storage",
-  "version": "1.0.0",
+  "version": "0.2.0",
+  "description": "IndexedDB storage wrapper for PwmngerTS",
   "main": "src/index.ts",
   "types": "src/index.ts",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/okikijesutech/PwmngerTS.git",
+    "directory": "packages/storage"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pwmnger/crypto": "workspace:*"
+  }
 }

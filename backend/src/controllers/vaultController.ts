@@ -1,4 +1,4 @@
-import { prisma } from "../db/prisma.js";
+import { prisma } from "../db/prisma";
 import type { Request, Response } from "express";
 
 interface AuthRequest extends Request {
@@ -13,7 +13,16 @@ export async function uploadVault(req: AuthRequest, res: Response) {
   const existing = await prisma.vault.findUnique({ where: { userId } });
   
   if (existing && existing.encrypted) {
-    const cloudUpdatedAt = (existing.encrypted as any).updatedAt || 0;
+    let cloudVault: any;
+    try {
+      cloudVault = typeof existing.encrypted === 'string' 
+        ? JSON.parse(existing.encrypted) 
+        : existing.encrypted;
+    } catch {
+      cloudVault = {};
+    }
+
+    const cloudUpdatedAt = cloudVault.updatedAt || 0;
     const clientUpdatedAt = encryptedVault.updatedAt || 0;
     
     if (cloudUpdatedAt > clientUpdatedAt) {

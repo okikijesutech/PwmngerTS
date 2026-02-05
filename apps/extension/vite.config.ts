@@ -9,6 +9,7 @@ export default defineConfig({
       "@pwmnger/vault": resolve(__dirname, "../../packages/vault/src"),
       "@pwmnger/storage": resolve(__dirname, "../../packages/storage/src"),
       "@pwmnger/ui": resolve(__dirname, "../../packages/ui/src"),
+      "@pwmnger/app-logic": resolve(__dirname, "../../packages/appLogic/src"),
     },
   },
   build: {

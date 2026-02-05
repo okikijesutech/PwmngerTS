@@ -1,4 +1,4 @@
-import { passwordStrength } from "./popup";
+import { passwordStrength } from "../password/strength";
 
 describe("passwordStrength", () => {
   test("returns 0 for empty password", () => {

@@ -1,69 +1,152 @@
-import { useState } from "react";
+// Set the API URL for the appLogic package
+(window as any).PW_API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
+import { useState, useEffect } from "react";
 import {
   createNewVault,
   unlockVault,
   getVault,
-  saveCurrentVault,
   lockVault,
   isUnlocked,
-  exportEncryptedVault,
-  importEncryptedVault,
   syncVaultWithCloud,
+  checkVaultExists,
+  registerAccount,
+  loginAccount,
+  addVaultEntry,
+  deleteVaultEntry,
 } from "@pwmnger/app-logic";
-import { Button, Input, Card, Toast } from "@pwmnger/ui";
-import { getPasswordStrength } from "./utils/passwordStrength";
-import { copyWithAutoClear } from "./utils/clipboard";
+import { Toast } from "@pwmnger/ui";
+import { UnlockVault } from "./components/Vault/UnlockVault";
+import { RegisterVault } from "./components/Vault/RegisterVault";
+import { LoginForm } from "./components/Vault/LoginForm";
+import { VaultDashboard } from "./components/Vault/VaultDashboard";
+
+type ViewState = "LOADING" | "LOGIN" | "REGISTER" | "UNLOCK" | "DASHBOARD";
 
 export default function App() {
-  const [passwordInput, setPasswordInput] = useState("");
-  const [site, setSite] = useState("");
-  const [username, setUsername] = useState("");
-  const [error, setError] = useState("");
   const [refresh, setRefresh] = useState(0);
-  const [search, setSearch] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isAuthAction, setIsAuthAction] = useState(false);
+  const [error, setError] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [vaultExists, setVaultExists] = useState(false);
+  // Track master email/password in memory only during session
+  const [session, setSession] = useState<{ email: string } | null>(null);
+  const [view, setView] = useState<ViewState>("LOADING");
 
-  const token = localStorage.getItem("pwmnger_token") || "mock-token";
-  const strength = getPasswordStrength(passwordInput);
+  useEffect(() => {
+    async function init() {
+      const exists = await checkVaultExists();
+      setVaultExists(exists);
+      if (exists) {
+        setView("UNLOCK");
+      } else {
+        setView("LOGIN"); // Default to login, user can switch to register
+      }
+    }
+    init();
+  }, [refresh]);
 
-  async function handleUnlock() {
+  const token = localStorage.getItem("pwmnger_token");
+
+  async function handleUnlock(password: string) {
     try {
-      await unlockVault(passwordInput);
-      setPasswordInput("");
-      setRefresh(refresh + 1);
+      await unlockVault(password);
+      setError("");
+      setRefresh(prev => prev + 1);
       setToast({ message: "Vault unlocked!", type: "success" });
-    } catch {
-      setError("Wrong password");
+    } catch (err: any) {
+      setError(err.message || "Incorrect Master Password");
     }
   }
 
-  async function handleAddEntry() {
+  async function handleLogin(email: string, password: string) {
+    setIsAuthAction(true);
+    setError("");
     try {
-      const vault = getVault();
-      vault.entries.push({
-        id: crypto.randomUUID(),
-        site,
-        username,
-        password: passwordInput,
-        notes: "",
-      });
-      await saveCurrentVault();
-      setSite("");
-      setUsername("");
-      setPasswordInput("");
-      setRefresh(refresh + 1);
-      setToast({ message: "Entry added", type: "success" });
+      // 1. Authenticate with backend to get token
+      const jwt = await loginAccount(email, password);
+      localStorage.setItem("pwmnger_token", jwt);
+      setSession({ email });
+
+      // 2. If local vault exists, we need to unlock it separately
+      // In a real scenario, we might download the vault here if it doesn't exist locally
+      if (vaultExists) {
+        await unlockVault(password);
+        setView("DASHBOARD");
+        setToast({ message: "Welcome back!", type: "success" });
+      } else {
+        // IDK flow: Download and decrypt? For now, if no local vault, assume sync needed
+        // But for this MVP let's just create a new one or sync
+        await syncVaultWithCloud(jwt);
+        setView("DASHBOARD");
+      }
+    } catch (err: any) {
+      console.error("Login Error:", err);
+      setError(err.message || "Login failed");
+    } finally {
+      setIsAuthAction(false);
+    }
+  }
+
+  async function handleRegister(email: string, password: string) {
+    setIsAuthAction(true);
+    setError("");
+    try {
+      console.log("App: Creating account...");
+      await registerAccount(email, password);
+      
+      console.log("App: Creating local vault...");
+      await createNewVault(password);
+      
+      console.log("App: Logging in...");
+      const jwt = await loginAccount(email, password);
+      localStorage.setItem("pwmnger_token", jwt);
+      
+      await unlockVault(password); 
+      setSession({ email });
+      setRefresh(prev => prev + 1);
+      setView("DASHBOARD");
+      setToast({ message: "Account created and vault secured!", type: "success" });
+    } catch (err: any) {
+      console.error("Registration Error:", err);
+      setError(err.message || "Failed to create account");
+    } finally {
+      setIsAuthAction(false);
+    }
+  }
+
+  async function handleAddEntry(site: string, username: string, password: string) {
+    try {
+      await addVaultEntry({ site, username, password });
+      setRefresh(prev => prev + 1);
+      setToast({ message: "Entry added successfully", type: "success" });
     } catch (err) {
-      console.error(err);
+      console.error("Add Entry Error:", err);
+      setToast({ message: "Failed to save entry to storage", type: "error" });
+    }
+  }
+
+  async function handleDeleteEntry(id: string) {
+    try {
+      await deleteVaultEntry(id);
+      setRefresh(prev => prev + 1);
+      setToast({ message: "Entry deleted", type: "success" });
+    } catch (err) {
+      console.error("Delete Entry Error:", err);
+      setToast({ message: "Failed to delete entry from storage", type: "error" });
     }
   }
 
   async function handleSync() {
+    if (!token) {
+      setToast({ message: "Please login to sync", type: "error" });
+      return;
+    }
     setIsSyncing(true);
     try {
       await syncVaultWithCloud(token);
-      setRefresh(refresh + 1);
+      setRefresh(prev => prev + 1);
       setToast({ message: "Vault synced with cloud!", type: "success" });
     } catch (err: any) {
       console.error(err);
@@ -73,30 +156,18 @@ export default function App() {
     }
   }
 
-  if (!isUnlocked()) {
-    return (
-      <div style={{ padding: 40, maxWidth: 450, margin: "auto", fontFamily: "Inter, sans-serif" }}>
-        <Card title="PwmngerTS Unlock">
-          <Input
-            type='password'
-            placeholder='Master password'
-            label="Master Password"
-            value={passwordInput}
-            onChange={(e) => setPasswordInput(e.target.value)}
-          />
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 24 }}>
-            <Button onClick={handleUnlock} style={{ width: "100%" }}>Unlock Vault</Button>
-          </div>
-          {error && <p style={{ color: "#ff4d4f", textAlign: "center", marginTop: 16 }}>{error}</p>}
-        </Card>
-      </div>
-    );
-  }
-
-  const vault = getVault();
+  const handleLock = () => {
+    lockVault();
+    setRefresh(prev => prev + 1);
+  };
 
   return (
-    <div style={{ padding: 40, maxWidth: 900, margin: "auto", fontFamily: "Inter, sans-serif" }}>
+    <div style={{ 
+      minHeight: '100vh', 
+      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+      padding: '40px 20px',
+      fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
+    }}>
       {toast && (
         <Toast 
           message={toast.message} 
@@ -105,81 +176,60 @@ export default function App() {
         />
       )}
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
-        <h2 style={{ margin: 0, color: "#1890ff" }}>PwmngerTS Vault</h2>
-        <div style={{ display: "flex", gap: 12 }}>
-          <Button onClick={handleSync} variant="secondary" disabled={isSyncing}>
-            {isSyncing ? "Syncing..." : "Sync Cloud"}
-          </Button>
-          <Button variant="danger" onClick={() => { lockVault(); setRefresh(refresh + 1); }}>
-            Lock Vault
-          </Button>
-        </div>
-      </div>
+      <main style={{ maxWidth: 900, margin: "auto" }}>
+        {view === "LOADING" && <p style={{textAlign: "center"}}>Loading...</p>}
+        
+        {view === "LOGIN" && (
+          <div style={{ maxWidth: 450, margin: "auto" }}>
+            <LoginForm 
+              onLogin={handleLogin} 
+              onGoToRegister={() => setView("REGISTER")}
+              error={error}
+              loading={isAuthAction}
+            />
+          </div>
+        )}
 
-      <Card title="Add New Credential" style={{ marginBottom: 32 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 16, alignItems: "end" }}>
-          <Input
-            placeholder='Site'
-            label="Website URL"
-            value={site}
-            onChange={(e) => setSite(e.target.value)}
-          />
-          <Input
-            placeholder='Username'
-            label="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <Input
-            type="password"
-            placeholder='Password'
-            label={`Password (${strength})`}
-            value={passwordInput}
-            onChange={(e) => setPasswordInput(e.target.value)}
-          />
-          <Button onClick={handleAddEntry} style={{ marginBottom: 16 }}>Add</Button>
-        </div>
-      </Card>
+        {view === "REGISTER" && (
+          <div style={{ maxWidth: 450, margin: "auto" }}>
+            <RegisterVault 
+              onRegister={handleRegister} 
+              onGoToLogin={() => setView("LOGIN")}
+              error={error} 
+              loading={isAuthAction} 
+            />
+          </div>
+        )}
 
-      <Input
-        placeholder='Search vault...'
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{ marginBottom: 32 }}
-      />
+        {view === "UNLOCK" && (
+          <div style={{ maxWidth: 450, margin: "auto" }}>
+            <UnlockVault 
+              onUnlock={handleUnlock} 
+              error={error} 
+            />
+            <p style={{ textAlign: "center", marginTop: 20 }}>
+              <span onClick={() => { localStorage.clear(); setView("LOGIN"); }} style={{ cursor: "pointer", color: "#666", fontSize: 13 }}>
+                Switch Account / Reset
+              </span>
+            </p>
+          </div>
+        )}
 
-      <div style={{ display: "grid", gap: 16 }}>
-        {vault.entries
-          .filter(e => e.site.toLowerCase().includes(search.toLowerCase()) || e.username.toLowerCase().includes(search.toLowerCase()))
-          .map(e => (
-            <div key={e.id} style={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center", 
-              padding: "16px 24px",
-              backgroundColor: "white",
-              borderRadius: 8,
-              border: "1px solid #f0f0f0",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.02)"
-            }}>
-              <div>
-                <div style={{ fontWeight: 600, fontSize: "16px" }}>{e.site}</div>
-                <div style={{ color: "#8c8c8c", fontSize: "14px" }}>{e.username}</div>
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <Button variant="secondary" onClick={() => { copyWithAutoClear(e.password); setToast({ message: "Copied!", type: "success" }); }}>Copy</Button>
-                <Button variant="danger" onClick={() => {
-                  const vault = getVault();
-                  vault.entries = vault.entries.filter(v => v.id !== e.id);
-                  saveCurrentVault();
-                  setRefresh(refresh + 1);
-                  setToast({ message: "Entry deleted", type: "success" });
-                }}>Delete</Button>
-              </div>
-            </div>
-          ))}
-      </div>
+        {view === "DASHBOARD" && (
+          <VaultDashboard 
+            vault={getVault()}
+            onSync={handleSync}
+            onLock={handleLock}
+            onAddEntry={handleAddEntry}
+            onDeleteEntry={handleDeleteEntry}
+            isSyncing={isSyncing}
+          />
+        )}
+      </main>
+      
+      <footer style={{ marginTop: 40, textAlign: 'center', color: '#777', fontSize: 13 }}>
+        &copy; 2026 PwmngerTS &bull; Secure Zero-Knowledge Storage
+      </footer>
     </div>
   );
 }

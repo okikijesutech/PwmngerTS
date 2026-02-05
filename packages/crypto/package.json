@@ -1,10 +1,19 @@
 {
   "name": "@pwmnger/crypto",
-  "version": "1.0.0",
+  "version": "0.2.0",
+  "description": "Cryptographic functions for PwmngerTS password manager",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/okikijesutech/PwmngerTS.git",
+    "directory": "packages/crypto"
+  },
   "dependencies": {
     "hash-wasm": "^4.12.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
   }
 }

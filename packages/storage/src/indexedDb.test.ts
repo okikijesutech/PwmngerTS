@@ -1,12 +1,13 @@
-import { saveVault, loadVault } from "./indexedDb";
+import { saveVault, loadVault, __resetDB } from "./indexedDb";
 
-const DB_NAME = "pwmngr-db";
+const DB_NAME = "pwmnger-db";
 const STORE_NAME = "vault";
 
 type StoredVault = {
   salt: number[];
   encryptedVault: any;
   encryptedVaultKey: any;
+  updatedAt: number;
 };
 
 describe("IndexedDB Storage", () => {
@@ -14,6 +15,7 @@ describe("IndexedDB Storage", () => {
     salt: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
     encryptedVault: { iv: [1, 2, 3], data: [4, 5, 6] },
     encryptedVaultKey: { iv: [7, 8, 9], data: [10, 11, 12] },
+    updatedAt: Date.now(),
   };
 
   let mockDB: any;
@@ -21,6 +23,9 @@ describe("IndexedDB Storage", () => {
   let mockStore: any;
 
   beforeEach(() => {
+    // Reset module internal state
+    __resetDB();
+
     // Clear any previous mocks
     jest.clearAllMocks();
 
@@ -74,6 +79,12 @@ describe("IndexedDB Storage", () => {
       setTimeout(() => {
         openRequest.onsuccess?.();
       }, 0);
+
+      // Simulate successful put request
+      setTimeout(() => {
+        const putRequest = (global as any).mockPutRequest;
+        putRequest.onsuccess?.();
+      }, 5);
 
       // Simulate transaction completion
       setTimeout(() => {
