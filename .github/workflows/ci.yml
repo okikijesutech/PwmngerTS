@@ -40,8 +40,14 @@ jobs:
     - name: Lint
       run: pnpm -r lint --if-present
 
-    - name: Run tests
+    - name: Run unit tests
       run: pnpm test
+
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps
+
+    - name: Run E2E tests
+      run: pnpm test:e2e
 
     - name: Build project
       run: pnpm build

@@ -7,20 +7,22 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "postbuild": "cp manifest.json dist/ && cp assets/icon.png dist/",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "vite": "^5.0.0",
-    "@types/chrome": "^0.0.254",
+    "@pwmnger/app-logic": "file:../../packages/appLogic",
     "@pwmnger/crypto": "file:../../packages/crypto",
-    "@pwmnger/vault": "file:../../packages/vault",
     "@pwmnger/storage": "file:../../packages/storage",
     "@pwmnger/ui": "file:../../packages/ui",
-    "@pwmnger/app-logic": "file:../../packages/appLogic"
+    "@pwmnger/vault": "file:../../packages/vault",
+    "@types/chrome": "^0.0.254",
+    "typescript": "^5.9.3",
+    "vite": "^5.0.0",
+    "vitest": "^4.0.18"
   }
 }
