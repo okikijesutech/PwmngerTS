@@ -24,7 +24,14 @@ jest.mock("@pwmnger/storage", () => ({
   loadVault: jest.fn(),
 }));
 
-import { deriveMasterKey, decryptData, encryptData, generateVaultKey, wrapKey, unwrapKey } from "@pwmnger/crypto";
+import {
+  deriveMasterKey,
+  decryptData,
+  encryptData,
+  generateVaultKey,
+  wrapKey,
+  unwrapKey,
+} from "@pwmnger/crypto";
 import { createEmptyVault } from "@pwmnger/vault";
 import { saveVault, loadVault } from "@pwmnger/storage";
 
@@ -200,62 +207,61 @@ describe("VaultManager", () => {
     let manager: any; // Using 'any' as VaultManager class is not defined in this context
 
     beforeEach(() => {
-        mockStorage = {
-            saveVault: jest.fn().mockResolvedValue(undefined),
-            loadVault: jest.fn().mockResolvedValue(null)
-        };
-        // Assuming a VaultManager class exists for these tests
-        // For the purpose of this edit, we'll mock a simple manager
-        manager = {
-          createNewVault: jest.fn(async (password) => {
-            if (password === "password123") {
-              const vault = { version: 1, data: "some_data" };
-              await mockStorage.saveVault(vault);
-              return vault;
-            }
-            return null;
-          }),
-          unlockVault: jest.fn(async (password) => {
-            const storedVault = await mockStorage.loadVault();
-            if (storedVault && password === "password123") {
-              return true;
-            }
-            return false;
-          })
-        };
+      mockStorage = {
+        saveVault: jest.fn().mockResolvedValue(undefined),
+        loadVault: jest.fn().mockResolvedValue(null),
+      };
+      // Assuming a VaultManager class exists for these tests
+      // For the purpose of this edit, we'll mock a simple manager
+      manager = {
+        createNewVault: jest.fn(async (password) => {
+          if (password === "password123") {
+            const vault = { version: 1, data: "some_data" };
+            await mockStorage.saveVault(vault);
+            return vault;
+          }
+          return null;
+        }),
+        unlockVault: jest.fn(async (password) => {
+          const storedVault = await mockStorage.loadVault();
+          if (storedVault && password === "password123") {
+            return true;
+          }
+          return false;
+        }),
+      };
     });
 
     test("should create an empty vault", async () => {
-        const vault = await manager.createNewVault("password123");
-        expect(vault).toBeDefined();
-        expect(vault.version).toBe(1);
-        expect(manager.createNewVault).toHaveBeenCalledWith("password123");
-        expect(mockStorage.saveVault).toHaveBeenCalled();
+      const vault = await manager.createNewVault("password123");
+      expect(vault).toBeDefined();
+      expect(vault.version).toBe(1);
+      expect(manager.createNewVault).toHaveBeenCalledWith("password123");
+      expect(mockStorage.saveVault).toHaveBeenCalled();
     });
 
     test("should unlock vault with correct password", async () => {
-        // Simulate creating a vault first for the unlock test
-        await manager.createNewVault("password123");
-        const createdVault = await manager.createNewVault.mock.results[0].value;
-        mockStorage.loadVault.mockResolvedValue(createdVault);
-        
-        const unlocked = await manager.unlockVault("password123");
-        expect(unlocked).toBe(true);
-        expect(manager.unlockVault).toHaveBeenCalledWith("password123");
+      // Simulate creating a vault first for the unlock test
+      await manager.createNewVault("password123");
+      const createdVault = await manager.createNewVault.mock.results[0].value;
+      mockStorage.loadVault.mockResolvedValue(createdVault);
+
+      const unlocked = await manager.unlockVault("password123");
+      expect(unlocked).toBe(true);
+      expect(manager.unlockVault).toHaveBeenCalledWith("password123");
     });
 
     test("should fail to unlock with wrong password", async () => {
-        // Simulate creating a vault first for the unlock test
-        await manager.createNewVault("password123");
-        const createdVault = await manager.createNewVault.mock.results[0].value;
-        mockStorage.loadVault.mockResolvedValue(createdVault);
-        
-        const unlocked = await manager.unlockVault("wrongpassword");
-        expect(unlocked).toBe(false);
-        expect(manager.unlockVault).toHaveBeenCalledWith("wrongpassword");
+      // Simulate creating a vault first for the unlock test
+      await manager.createNewVault("password123");
+      const createdVault = await manager.createNewVault.mock.results[0].value;
+      mockStorage.loadVault.mockResolvedValue(createdVault);
+
+      const unlocked = await manager.unlockVault("wrongpassword");
+      expect(unlocked).toBe(false);
+      expect(manager.unlockVault).toHaveBeenCalledWith("wrongpassword");
     });
   });
-
 
   describe("saveCurrentVault", () => {
     it("should throw error if vault is locked", async () => {
@@ -326,22 +332,48 @@ describe("VaultManager", () => {
         version: 1,
         updatedAt: 100,
         entries: [
-          { id: "1", site: "local", username: "u1", password: "p1", lastModified: 100 },
-          { id: "2", site: "conflict", username: "u2", password: "local-win", lastModified: 300 },
+          {
+            id: "1",
+            site: "local",
+            username: "u1",
+            password: "p1",
+            lastModified: 100,
+          },
+          {
+            id: "2",
+            site: "conflict",
+            username: "u2",
+            password: "local-win",
+            lastModified: 300,
+          },
         ],
       };
       const remoteVault = {
         version: 1,
         updatedAt: 200,
         entries: [
-          { id: "2", site: "conflict", username: "u2", password: "remote-lose", lastModified: 200 },
-          { id: "3", site: "remote", username: "u3", password: "p3", lastModified: 200 },
+          {
+            id: "2",
+            site: "conflict",
+            username: "u2",
+            password: "remote-lose",
+            lastModified: 200,
+          },
+          {
+            id: "3",
+            site: "remote",
+            username: "u3",
+            password: "p3",
+            lastModified: 200,
+          },
         ],
       };
 
       const result = mergeVaults(localVault, remoteVault);
       expect(result.entries).toHaveLength(3);
-      expect(result.entries.find((e: any) => e.id === "2")?.password).toBe("local-win");
+      expect(result.entries.find((e: any) => e.id === "2")?.password).toBe(
+        "local-win",
+      );
       expect(result.updatedAt).toBe(200);
     });
   });

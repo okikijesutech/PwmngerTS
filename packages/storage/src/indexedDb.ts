@@ -82,7 +82,10 @@ export async function loadVault(): Promise<StoredVault | null> {
     const request = store.get("main");
 
     request.onsuccess = () => {
-      console.log("IndexedDB: Load request successful", request.result ? "data found" : "no data found");
+      console.log(
+        "IndexedDB: Load request successful",
+        request.result ? "data found" : "no data found",
+      );
       resolve(request.result ?? null);
     };
     request.onerror = () => {

@@ -12,6 +12,7 @@ The master password is transformed into a cryptographic key using Argon2id, a me
 
 **Algorithm**: Argon2id  
 **Parameters**:
+
 - **Memory**: 64 MB (65536 KB)
 - **Iterations**: 3
 - **Parallelism**: 4 threads
@@ -24,8 +25,8 @@ The master password is transformed into a cryptographic key using Argon2id, a me
 // From packages/crypto/src/kdf.ts
 export async function deriveMasterKey(
   password: string,
-  salt: Uint8Array
-): Promise<CryptoKey>
+  salt: Uint8Array,
+): Promise<CryptoKey>;
 ```
 
 The salt is generated once during vault creation and stored with the encrypted vault. This ensures the same password always derives the same master key for a given vault.
@@ -41,7 +42,7 @@ The vault key is a randomly generated AES-256 key used to encrypt the actual vau
 
 ```typescript
 // From packages/crypto/src/vaultKey.ts
-export async function generateVaultKey(): Promise<CryptoKey>
+export async function generateVaultKey(): Promise<CryptoKey>;
 ```
 
 ## Encryption
@@ -59,11 +60,12 @@ The vault (containing all password entries) is encrypted using AES-256-GCM, whic
 // From packages/crypto/src/encrypt.ts
 export async function encryptData<T>(
   key: CryptoKey,
-  data: T
-): Promise<EncryptedPayload>
+  data: T,
+): Promise<EncryptedPayload>;
 ```
 
 **EncryptedPayload Structure**:
+
 ```typescript
 {
   iv: number[],    // 12-byte initialization vector
@@ -83,13 +85,13 @@ The vault key is encrypted (wrapped) with the master key to protect it at rest.
 // From packages/crypto/src/keys.ts
 export async function wrapKey(
   masterKey: CryptoKey,
-  vaultKey: CryptoKey
-): Promise<EncryptedPayload>
+  vaultKey: CryptoKey,
+): Promise<EncryptedPayload>;
 
 export async function unwrapKey(
   masterKey: CryptoKey,
-  wrappedKey: EncryptedPayload
-): Promise<CryptoKey>
+  wrappedKey: EncryptedPayload,
+): Promise<CryptoKey>;
 ```
 
 ## Data Flow
@@ -147,14 +149,14 @@ Note: The vault key remains the same; only the encrypted vault blob changes.
 
 ## Threat Model Alignment
 
-| Threat | Mitigation |
-|--------|------------|
-| Server breach | Server stores only encrypted blobs; cannot decrypt without master password |
-| Network sniffing | Only encrypted data transmitted over network |
-| Weak password | Argon2id parameters make brute-force expensive (64MB memory, 3 iterations) |
-| Key reuse | Fresh IV generated for each encryption operation |
-| Tampering | GCM authentication tag detects modifications |
-| Lost device | Vault remains encrypted; master password required to unlock |
+| Threat           | Mitigation                                                                 |
+| ---------------- | -------------------------------------------------------------------------- |
+| Server breach    | Server stores only encrypted blobs; cannot decrypt without master password |
+| Network sniffing | Only encrypted data transmitted over network                               |
+| Weak password    | Argon2id parameters make brute-force expensive (64MB memory, 3 iterations) |
+| Key reuse        | Fresh IV generated for each encryption operation                           |
+| Tampering        | GCM authentication tag detects modifications                               |
+| Lost device      | Vault remains encrypted; master password required to unlock                |
 
 ## Attacks We Cannot Stop
 
@@ -169,6 +171,7 @@ Note: The vault key remains the same; only the encrypted vault blob changes.
 ### Web Crypto API
 
 All cryptographic operations use the browser's native Web Crypto API (`crypto.subtle`), which provides:
+
 - Hardware-accelerated encryption
 - Secure key storage (non-extractable keys when possible)
 - Constant-time operations (resistant to timing attacks)
@@ -176,6 +179,7 @@ All cryptographic operations use the browser's native Web Crypto API (`crypto.su
 ### No Custom Crypto
 
 We **do not** implement custom cryptographic algorithms. All primitives are provided by:
+
 - Web Crypto API (AES-GCM, key generation)
 - hash-wasm library (Argon2id)
 
@@ -200,6 +204,7 @@ When syncing to the cloud:
 3. **Conflict Resolution**: Entries are compared by `lastModified` timestamp
 
 The server never receives:
+
 - Master password
 - Vault key
 - Plaintext vault data

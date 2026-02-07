@@ -11,25 +11,26 @@ export async function uploadVault(req: AuthRequest, res: Response) {
 
   // Check for conflicts: prevent older data from overwriting newer cloud data
   const existing = await prisma.vault.findUnique({ where: { userId } });
-  
+
   if (existing && existing.encrypted) {
     let cloudVault: any;
     try {
-      cloudVault = typeof existing.encrypted === 'string' 
-        ? JSON.parse(existing.encrypted) 
-        : existing.encrypted;
+      cloudVault =
+        typeof existing.encrypted === "string"
+          ? JSON.parse(existing.encrypted)
+          : existing.encrypted;
     } catch {
       cloudVault = {};
     }
 
     const cloudUpdatedAt = cloudVault.updatedAt || 0;
     const clientUpdatedAt = encryptedVault.updatedAt || 0;
-    
+
     if (cloudUpdatedAt > clientUpdatedAt) {
-      return res.status(409).json({ 
-        success: false, 
+      return res.status(409).json({
+        success: false,
         error: "CONFLICT",
-        message: "Cloud version is newer than client version" 
+        message: "Cloud version is newer than client version",
       });
     }
   }

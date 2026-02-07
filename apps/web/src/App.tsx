@@ -1,5 +1,6 @@
 // Set the API URL for the appLogic package
-(window as any).PW_API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+(window as any).PW_API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 import { useState, useEffect } from "react";
 import {
@@ -28,7 +29,10 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isAuthAction, setIsAuthAction] = useState(false);
   const [error, setError] = useState("");
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
   const [vaultExists, setVaultExists] = useState(false);
   // Track master email/password in memory only during session
   const [session, setSession] = useState<{ email: string } | null>(null);
@@ -53,14 +57,18 @@ export default function App() {
     try {
       await unlockVault(password);
       setError("");
-      setRefresh(prev => prev + 1);
+      setRefresh((prev) => prev + 1);
       setToast({ message: "Vault unlocked!", type: "success" });
     } catch (err: any) {
       setError(err.message || "Incorrect Master Password");
     }
   }
 
-  async function handleLogin(email: string, password: string, twoFactorToken?: string) {
+  async function handleLogin(
+    email: string,
+    password: string,
+    twoFactorToken?: string,
+  ) {
     setIsAuthAction(true);
     setError("");
     try {
@@ -97,19 +105,22 @@ export default function App() {
     try {
       console.log("App: Creating account...");
       await registerAccount(email, password);
-      
+
       console.log("App: Creating local vault...");
       await createNewVault(password);
-      
+
       console.log("App: Logging in...");
       const jwt = await loginAccount(email, password);
       localStorage.setItem("pwmnger_token", jwt);
-      
-      await unlockVault(password); 
+
+      await unlockVault(password);
       setSession({ email });
-      setRefresh(prev => prev + 1);
+      setRefresh((prev) => prev + 1);
       setView("DASHBOARD");
-      setToast({ message: "Account created and vault secured!", type: "success" });
+      setToast({
+        message: "Account created and vault secured!",
+        type: "success",
+      });
     } catch (err: any) {
       console.error("Registration Error:", err);
       setError(err.message || "Failed to create account");
@@ -118,10 +129,14 @@ export default function App() {
     }
   }
 
-  async function handleAddEntry(site: string, username: string, password: string) {
+  async function handleAddEntry(
+    site: string,
+    username: string,
+    password: string,
+  ) {
     try {
       await addVaultEntry({ site, username, password });
-      setRefresh(prev => prev + 1);
+      setRefresh((prev) => prev + 1);
       setToast({ message: "Entry added successfully", type: "success" });
     } catch (err) {
       console.error("Add Entry Error:", err);
@@ -132,11 +147,14 @@ export default function App() {
   async function handleDeleteEntry(id: string) {
     try {
       await deleteVaultEntry(id);
-      setRefresh(prev => prev + 1);
+      setRefresh((prev) => prev + 1);
       setToast({ message: "Entry deleted", type: "success" });
     } catch (err) {
       console.error("Delete Entry Error:", err);
-      setToast({ message: "Failed to delete entry from storage", type: "error" });
+      setToast({
+        message: "Failed to delete entry from storage",
+        type: "error",
+      });
     }
   }
 
@@ -148,7 +166,7 @@ export default function App() {
     setIsSyncing(true);
     try {
       await syncVaultWithCloud(token);
-      setRefresh(prev => prev + 1);
+      setRefresh((prev) => prev + 1);
       setToast({ message: "Vault synced with cloud!", type: "success" });
     } catch (err: any) {
       console.error(err);
@@ -160,31 +178,35 @@ export default function App() {
 
   const handleLock = () => {
     lockVault();
-    setRefresh(prev => prev + 1);
+    setRefresh((prev) => prev + 1);
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      padding: '40px 20px',
-      fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
-    }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        padding: "40px 20px",
+        fontFamily: "Inter, system-ui, -apple-system, sans-serif",
+      }}
+    >
       {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={() => setToast(null)} 
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
 
       <main style={{ maxWidth: 900, margin: "auto" }}>
-        {view === "LOADING" && <p style={{textAlign: "center"}}>Loading...</p>}
-        
+        {view === "LOADING" && (
+          <p style={{ textAlign: "center" }}>Loading...</p>
+        )}
+
         {view === "LOGIN" && (
           <div style={{ maxWidth: 450, margin: "auto" }}>
-            <LoginForm 
-              onLogin={handleLogin} 
+            <LoginForm
+              onLogin={handleLogin}
               onGoToRegister={() => setView("REGISTER")}
               error={error}
               loading={isAuthAction}
@@ -194,23 +216,26 @@ export default function App() {
 
         {view === "REGISTER" && (
           <div style={{ maxWidth: 450, margin: "auto" }}>
-            <RegisterVault 
-              onRegister={handleRegister} 
+            <RegisterVault
+              onRegister={handleRegister}
               onGoToLogin={() => setView("LOGIN")}
-              error={error} 
-              loading={isAuthAction} 
+              error={error}
+              loading={isAuthAction}
             />
           </div>
         )}
 
         {view === "UNLOCK" && (
           <div style={{ maxWidth: 450, margin: "auto" }}>
-            <UnlockVault 
-              onUnlock={handleUnlock} 
-              error={error} 
-            />
+            <UnlockVault onUnlock={handleUnlock} error={error} />
             <p style={{ textAlign: "center", marginTop: 20 }}>
-              <span onClick={() => { localStorage.clear(); setView("LOGIN"); }} style={{ cursor: "pointer", color: "#666", fontSize: 13 }}>
+              <span
+                onClick={() => {
+                  localStorage.clear();
+                  setView("LOGIN");
+                }}
+                style={{ cursor: "pointer", color: "#666", fontSize: 13 }}
+              >
                 Switch Account / Reset
               </span>
             </p>
@@ -218,7 +243,7 @@ export default function App() {
         )}
 
         {view === "DASHBOARD" && (
-          <VaultDashboard 
+          <VaultDashboard
             vault={getVault()}
             onSync={handleSync}
             onLock={handleLock}
@@ -228,8 +253,15 @@ export default function App() {
           />
         )}
       </main>
-      
-      <footer style={{ marginTop: 40, textAlign: 'center', color: '#777', fontSize: 13 }}>
+
+      <footer
+        style={{
+          marginTop: 40,
+          textAlign: "center",
+          color: "#777",
+          fontSize: 13,
+        }}
+      >
         &copy; 2026 PwmngerTS &bull; Secure Zero-Knowledge Storage
       </footer>
     </div>

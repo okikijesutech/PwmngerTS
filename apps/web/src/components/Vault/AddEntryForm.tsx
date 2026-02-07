@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { Button, Input, Card } from "@pwmnger/ui";
-import { PasswordStrengthMeter } from '../Shared/PasswordStrengthMeter';
-import { getPasswordStrength } from '../../utils/passwordStrength';
+import { PasswordStrengthMeter } from "../Shared/PasswordStrengthMeter";
+import { getPasswordStrength } from "../../utils/passwordStrength";
 
 interface AddEntryFormProps {
   onAdd: (site: string, username: string, password: string) => void;
@@ -24,30 +24,39 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({ onAdd }) => {
 
   return (
     <Card title="Add New Credential" style={{ marginBottom: 32 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 16, alignItems: 'start' }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr 1fr auto",
+          gap: 16,
+          alignItems: "start",
+        }}
+      >
         <Input
-          placeholder='Site (e.g. google.com)'
+          placeholder="Site (e.g. google.com)"
           label="Website"
           value={site}
           onChange={(e) => setSite(e.target.value)}
         />
         <Input
-          placeholder='Username'
+          placeholder="Username"
           label="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
           <Input
             type="password"
-            placeholder='Password'
+            placeholder="Password"
             label="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
           <PasswordStrengthMeter strength={strength} />
         </div>
-        <Button onClick={handleSubmit} style={{ marginTop: 24 }}>Add</Button>
+        <Button onClick={handleSubmit} style={{ marginTop: 24 }}>
+          Add
+        </Button>
       </div>
     </Card>
   );

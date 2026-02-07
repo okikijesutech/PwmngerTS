@@ -34,7 +34,10 @@ export async function verify2FASetup(req: Request, res: Response) {
 }
 
 // Used during login
-export async function verify2FALogin(userId: string, token: string): Promise<boolean> {
+export async function verify2FALogin(
+  userId: string,
+  token: string,
+): Promise<boolean> {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user || !user.twoFactorSecret) return false;
   return authenticator.check(token, user.twoFactorSecret);

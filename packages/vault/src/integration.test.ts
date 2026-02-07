@@ -47,10 +47,12 @@ describe("Integration Tests (Crypto + Vault)", () => {
     const wrongPassword = "WrongPassword123!";
     const wrongKey = await deriveMasterKey(wrongPassword, salt);
 
-    await expect(decryptData(wrongKey, {
-      iv: new Uint8Array(encryptedVault.iv),
-      data: new Uint8Array(encryptedVault.data),
-    } as any)).rejects.toThrow();
+    await expect(
+      decryptData(wrongKey, {
+        iv: new Uint8Array(encryptedVault.iv),
+        data: new Uint8Array(encryptedVault.data),
+      } as any),
+    ).rejects.toThrow();
   });
 
   test("Test 7: Large Dataset Processing", async () => {
@@ -66,10 +68,10 @@ describe("Integration Tests (Crypto + Vault)", () => {
     }
 
     const encrypted = await encryptData(masterKey, largeVault);
-    const decrypted = await decryptData(masterKey, {
+    const decrypted = (await decryptData(masterKey, {
       iv: new Uint8Array(encrypted.iv),
       data: new Uint8Array(encrypted.data),
-    } as any) as Vault;
+    } as any)) as Vault;
 
     expect(decrypted.entries.length).toBe(50);
   });

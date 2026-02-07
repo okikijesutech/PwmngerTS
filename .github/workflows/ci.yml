@@ -15,7 +15,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup pnpm
-      uses: pnpm/action-setup@v2
+      uses: pnpm/action-setup@v4
       with:
         version: 10
 
@@ -27,6 +27,9 @@ jobs:
 
     - name: Install dependencies
       run: pnpm install
+
+    - name: Check Formatting
+      run: pnpm format:check
 
     - name: Generate Prisma Client
       run: pnpm --filter backend exec prisma generate
@@ -41,7 +44,13 @@ jobs:
       run: pnpm test
 
     - name: Build project
-      run: pnpm -r build
+      run: pnpm build
 
     - name: Verify Extension Build
-      run: ls -R apps/extension/dist
+      run: ls -lR apps/extension/dist
+
+    - name: Upload Extension Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: extension-build
+        path: apps/extension/dist/

@@ -23,7 +23,9 @@ const validate = (req: Request, res: Response, next: NextFunction) => {
 
 const registerValidation = [
   body("email").isEmail().withMessage("Invalid email"),
-  body("authHash").isLength({ min: 32 }).withMessage("Invalid auth hash format"),
+  body("authHash")
+    .isLength({ min: 32 })
+    .withMessage("Invalid auth hash format"),
 ];
 
 router.post("/register", authLimiter, registerValidation, validate, register);

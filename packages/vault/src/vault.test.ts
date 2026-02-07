@@ -35,23 +35,47 @@ describe("Vault Package", () => {
   });
 
   test("Test 5: Retrieve Entry", () => {
-    const entry1: VaultEntry = { id: "entry-1", site: "s1", username: "u1", password: "p1", lastModified: Date.now() };
-    const entry2: VaultEntry = { id: "entry-2", site: "s2", username: "u2", password: "p2", lastModified: Date.now() };
+    const entry1: VaultEntry = {
+      id: "entry-1",
+      site: "s1",
+      username: "u1",
+      password: "p1",
+      lastModified: Date.now(),
+    };
+    const entry2: VaultEntry = {
+      id: "entry-2",
+      site: "s2",
+      username: "u2",
+      password: "p2",
+      lastModified: Date.now(),
+    };
     vault.entries.push(entry1, entry2);
-    
+
     const foundEntry = vault.entries.find((e) => e.id === "entry-2");
     expect(foundEntry).toBeDefined();
     expect(foundEntry?.site).toBe("s2");
   });
 
   test("Test 7: Delete Entry", () => {
-    vault.entries.push({ id: "entry-1", site: "s1", username: "u1", password: "p1", lastModified: Date.now() });
+    vault.entries.push({
+      id: "entry-1",
+      site: "s1",
+      username: "u1",
+      password: "p1",
+      lastModified: Date.now(),
+    });
     vault.entries = vault.entries.filter((e) => e.id !== "entry-1");
     expect(vault.entries.length).toBe(0);
   });
 
   test("Test 9: Vault Serialization", () => {
-    vault.entries.push({ id: "entry-1", site: "s1", username: "u1", password: "p1", lastModified: Date.now() });
+    vault.entries.push({
+      id: "entry-1",
+      site: "s1",
+      username: "u1",
+      password: "p1",
+      lastModified: Date.now(),
+    });
     const serialized = JSON.stringify(vault);
     const deserialized = JSON.parse(serialized) as Vault;
     expect(deserialized.entries.length).toBe(1);

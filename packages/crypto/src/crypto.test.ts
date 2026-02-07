@@ -52,8 +52,10 @@ describe("Crypto Package", () => {
   test("Test 5: Encryption Randomness Check", async () => {
     const encrypted1 = await encryptData(masterKey, testData);
     const encrypted2 = await encryptData(masterKey, testData);
-    
-    const ivMatch = Array.from(encrypted1.iv).every((v, i) => v === encrypted2.iv[i]);
+
+    const ivMatch = Array.from(encrypted1.iv).every(
+      (v, i) => v === encrypted2.iv[i],
+    );
     expect(ivMatch).toBe(false);
   });
 
@@ -62,9 +64,11 @@ describe("Crypto Package", () => {
     const wrongPassword = "WrongPassword123!";
     const wrongMasterKey = await deriveMasterKey(wrongPassword, salt);
 
-    await expect(decryptData(wrongMasterKey, {
-      iv: new Uint8Array(encrypted.iv),
-      data: new Uint8Array(encrypted.data),
-    } as any)).rejects.toThrow();
+    await expect(
+      decryptData(wrongMasterKey, {
+        iv: new Uint8Array(encrypted.iv),
+        data: new Uint8Array(encrypted.data),
+      } as any),
+    ).rejects.toThrow();
   });
 });

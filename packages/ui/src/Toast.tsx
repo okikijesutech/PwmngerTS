@@ -7,11 +7,11 @@ interface ToastProps {
   onClose: () => void;
 }
 
-export const Toast: React.FC<ToastProps> = ({ 
-  message, 
-  type = "info", 
-  duration = 3000, 
-  onClose 
+export const Toast: React.FC<ToastProps> = ({
+  message,
+  type = "info",
+  duration = 3000,
+  onClose,
 }) => {
   const [visible, setVisible] = useState(true);
 
@@ -25,9 +25,12 @@ export const Toast: React.FC<ToastProps> = ({
 
   const getBackgroundColor = () => {
     switch (type) {
-      case "success": return "#52c41a";
-      case "error": return "#ff4d4f";
-      default: return "#1890ff";
+      case "success":
+        return "#52c41a";
+      case "error":
+        return "#ff4d4f";
+      default:
+        return "#1890ff";
     }
   };
 
@@ -47,9 +50,5 @@ export const Toast: React.FC<ToastProps> = ({
     fontWeight: 500,
   };
 
-  return (
-    <div style={toastStyle}>
-      {message}
-    </div>
-  );
+  return <div style={toastStyle}>{message}</div>;
 };

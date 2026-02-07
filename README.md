@@ -31,6 +31,7 @@ graph TD
 ```
 
 **Security Guarantees:**
+
 - Backend **NEVER** sees plaintext data.
 - Master Password **NEVER** leaves the client device.
 - Data is encrypted with **AES-256-GCM**.
@@ -62,6 +63,7 @@ PwmngerTS/
 See the [User Guide](docs/USER_GUIDE.md) for how to use the application.
 
 For developers and self-hosting:
+
 - **Deployment**: See [Distribution Guide](docs/DISTRIBUTION.md)
 - **Contributing**: See [Contributing Guidelines](docs/CONTRIBUTING.md)
 - **Security**: See [Security Policy](docs/SECURITY.md)
@@ -69,12 +71,14 @@ For developers and self-hosting:
 ### Quick Start (Local Dev)
 
 1.  **Clone & Install**
+
     ```bash
     git clone https://github.com/okikijesutech/PwmngerTS.git
     npm install
     ```
 
 2.  **Start Environment**
+
     ```bash
     # Starts Web, Backend, and Extension build
     npm run dev

@@ -37,7 +37,7 @@ export async function login(req: Request, res: Response) {
     if (!twoFactorToken) {
       return res.status(401).json({ error: "2FA Required", requires2FA: true });
     }
-    
+
     const valid2FA = await verify2FALogin(user.id, twoFactorToken);
     if (!valid2FA) {
       return res.status(401).json({ error: "Invalid 2FA Token" });

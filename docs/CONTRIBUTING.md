@@ -85,3 +85,4 @@ Please open a discussion before submitting a PR.
 - Do NOT weaken encryption parameters
 
 Thank you for helping make this project better ❤️
+```

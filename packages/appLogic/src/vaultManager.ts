@@ -1,10 +1,10 @@
-import { 
-  deriveMasterKey, 
-  decryptData, 
-  encryptData, 
+import {
+  deriveMasterKey,
+  decryptData,
+  encryptData,
   generateVaultKey,
   wrapKey,
-  unwrapKey 
+  unwrapKey,
 } from "@pwmnger/crypto";
 import { createEmptyVault } from "@pwmnger/vault";
 import { saveVault, loadVault } from "@pwmnger/storage";
@@ -62,12 +62,15 @@ export function mergeVaults(local: Vault, remote: Vault): Vault {
   const mergedEntriesMap = new Map<string, VaultEntry>();
 
   // Add all local entries
-  local.entries.forEach(entry => mergedEntriesMap.set(entry.id, entry));
+  local.entries.forEach((entry) => mergedEntriesMap.set(entry.id, entry));
 
   // Merge remote entries
-  remote.entries.forEach(remoteEntry => {
+  remote.entries.forEach((remoteEntry) => {
     const existingEntry = mergedEntriesMap.get(remoteEntry.id);
-    if (!existingEntry || remoteEntry.lastModified > existingEntry.lastModified) {
+    if (
+      !existingEntry ||
+      remoteEntry.lastModified > existingEntry.lastModified
+    ) {
       mergedEntriesMap.set(remoteEntry.id, remoteEntry);
     }
   });
@@ -110,7 +113,9 @@ export async function saveCurrentVault() {
 
     const stored = await loadVault();
     if (!stored) {
-      console.error("saveCurrentVault failed: No existing vault found in storage");
+      console.error(
+        "saveCurrentVault failed: No existing vault found in storage",
+      );
       throw new Error("No vault to update");
     }
 
@@ -125,7 +130,9 @@ export async function saveCurrentVault() {
   }
 }
 
-export async function addVaultEntry(entry: Omit<VaultEntry, "id" | "lastModified">) {
+export async function addVaultEntry(
+  entry: Omit<VaultEntry, "id" | "lastModified">,
+) {
   const vault = getVault();
   const newEntry: VaultEntry = {
     ...entry,
@@ -140,7 +147,7 @@ export async function addVaultEntry(entry: Omit<VaultEntry, "id" | "lastModified
 export async function deleteVaultEntry(id: string) {
   const vault = getVault();
   const originalEntries = [...vault.entries];
-  vault.entries = vault.entries.filter(v => v.id !== id);
+  vault.entries = vault.entries.filter((v) => v.id !== id);
   try {
     await saveCurrentVault();
   } catch (err) {
@@ -154,10 +161,10 @@ export async function deleteVaultEntry(id: string) {
 export async function createFolder(name: string) {
   const vault = getVault();
   if (!vault.folders) vault.folders = []; // Initialize if missing (migration)
-  
+
   const newFolder = {
     id: crypto.randomUUID(),
-    name
+    name,
   };
   vault.folders.push(newFolder);
   await saveCurrentVault();
@@ -169,21 +176,24 @@ export async function deleteFolder(id: string) {
   if (!vault.folders) return;
 
   // Remove folder
-  vault.folders = vault.folders.filter(f => f.id !== id);
-  
+  vault.folders = vault.folders.filter((f) => f.id !== id);
+
   // Move entries in this folder back to root (null)
-  vault.entries.forEach(e => {
+  vault.entries.forEach((e) => {
     if (e.folderId === id) delete e.folderId;
   });
-  
+
   await saveCurrentVault();
 }
 
-export async function moveEntryToFolder(entryId: string, folderId: string | null) {
+export async function moveEntryToFolder(
+  entryId: string,
+  folderId: string | null,
+) {
   const vault = getVault();
-  const entry = vault.entries.find(e => e.id === entryId);
+  const entry = vault.entries.find((e) => e.id === entryId);
   if (!entry) throw new Error("Entry not found");
-  
+
   if (folderId) {
     entry.folderId = folderId;
   } else {
@@ -216,7 +226,7 @@ export async function exportEncryptedVault() {
 // Export decrypted vault as JSON (For user backup)
 export async function exportVaultData(): Promise<string> {
   if (!unlockedVault) throw new Error("Vault must be unlocked to export data");
-  
+
   // We export the Raw Vault structure
   // In a real app, we might want to sanitize or format this (e.g. CSV)
   return JSON.stringify(unlockedVault, null, 2);
@@ -228,7 +238,7 @@ export async function importVaultData(jsonString: string) {
 
   try {
     const importedVault = JSON.parse(jsonString) as Vault;
-    
+
     // Basic validation
     if (!importedVault.entries || !Array.isArray(importedVault.entries)) {
       throw new Error("Invalid vault format: missing entries array");
@@ -239,7 +249,7 @@ export async function importVaultData(jsonString: string) {
     // Re-use mergeVaults logic
     const merged = mergeVaults(unlockedVault, importedVault);
     unlockedVault = merged;
-    
+
     await saveCurrentVault();
   } catch (err) {
     console.error("Import failed:", err);
@@ -258,21 +268,27 @@ export async function importEncryptedVault(encryptedVault: any) {
 
 export async function exportRecoveryData() {
   if (!vaultKey) throw new Error("Vault is locked");
-  
+
   // Generate a random Recovery Key (32 bytes)
   const recoveryKeyBytes = crypto.getRandomValues(new Uint8Array(32));
   const recoveryKeyBits = await crypto.subtle.importKey(
-    "raw", recoveryKeyBytes, "AES-GCM", true, ["encrypt", "decrypt", "wrapKey", "unwrapKey"]
+    "raw",
+    recoveryKeyBytes,
+    "AES-GCM",
+    true,
+    ["encrypt", "decrypt", "wrapKey", "unwrapKey"],
   );
 
   // Wrap the Vault Key with this Recovery Key
   // This allows us to regain access to the vault data (which is encrypted with Vault Key)
   // without needing the Master Password.
   const wrappedVaultKey = await wrapKey(recoveryKeyBits, vaultKey);
-  
+
   // Convert recovery key to hex for user to save
-  const recoveryKeyHex = Array.from(recoveryKeyBytes).map(b => b.toString(16).padStart(2, '0')).join('');
-  
+  const recoveryKeyHex = Array.from(recoveryKeyBytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
   return {
     recoveryKey: recoveryKeyHex,
     encryptedVaultKey: wrappedVaultKey, // This goes into the kit or the vault metadata
@@ -310,7 +326,7 @@ export async function syncFromCloud(token: string) {
 export async function syncVaultWithCloud(token: string) {
   // 1. Pull latest from cloud
   await syncFromCloud(token);
-  
+
   // 2. Push current (merged) local to cloud
   const encrypted = await exportEncryptedVault();
 
@@ -326,8 +342,10 @@ export async function syncVaultWithCloud(token: string) {
   if (res.status === 409) {
     // Conflict handled by immediate retry pull
     await syncFromCloud(token);
-    throw new Error("Conflict detected and resolved from cloud. Please review your entries.");
+    throw new Error(
+      "Conflict detected and resolved from cloud. Please review your entries.",
+    );
   }
-  
+
   if (!res.ok) throw new Error("Sync failed");
 }

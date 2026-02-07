@@ -5,7 +5,12 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
-export const Input: React.FC<InputProps> = ({ label, error, style, ...props }) => {
+export const Input: React.FC<InputProps> = ({
+  label,
+  error,
+  style,
+  ...props
+}) => {
   const containerStyles: React.CSSProperties = {
     marginBottom: "16px",
     display: "flex",
@@ -41,19 +46,19 @@ export const Input: React.FC<InputProps> = ({ label, error, style, ...props }) =
   return (
     <div style={containerStyles}>
       {label && <label style={labelStyles}>{label}</label>}
-      <input 
+      <input
         style={inputStyles}
         onFocus={(e) => {
           if (!error) e.currentTarget.style.borderColor = "#40a9ff";
-          e.currentTarget.style.boxShadow = error 
-            ? "0 0 0 2px rgba(255, 77, 79, 0.2)" 
+          e.currentTarget.style.boxShadow = error
+            ? "0 0 0 2px rgba(255, 77, 79, 0.2)"
             : "0 0 0 2px rgba(24, 144, 255, 0.2)";
         }}
         onBlur={(e) => {
           e.currentTarget.style.borderColor = error ? "#ff4d4f" : "#d9d9d9";
           e.currentTarget.style.boxShadow = "none";
         }}
-        {...props} 
+        {...props}
       />
       {error && <span style={errorStyles}>{error}</span>}
     </div>

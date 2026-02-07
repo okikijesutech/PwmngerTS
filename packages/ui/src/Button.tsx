@@ -4,11 +4,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "danger";
 }
 
-export const Button: React.FC<ButtonProps> = ({ 
-  children, 
-  variant = "primary", 
-  style, 
-  ...props 
+export const Button: React.FC<ButtonProps> = ({
+  children,
+  variant = "primary",
+  style,
+  ...props
 }) => {
   const getVariantStyles = () => {
     switch (variant) {
@@ -49,15 +49,17 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   return (
-    <button 
-      style={baseStyles} 
+    <button
+      style={baseStyles}
       onMouseOver={(e) => {
         (e.currentTarget as HTMLButtonElement).style.opacity = "0.85";
-        (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
+        (e.currentTarget as HTMLButtonElement).style.transform =
+          "translateY(-1px)";
       }}
       onMouseOut={(e) => {
         (e.currentTarget as HTMLButtonElement).style.opacity = "1";
-        (e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)";
+        (e.currentTarget as HTMLButtonElement).style.transform =
+          "translateY(0)";
       }}
       {...props}
     >

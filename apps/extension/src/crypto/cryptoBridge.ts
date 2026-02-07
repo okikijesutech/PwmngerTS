@@ -1,11 +1,21 @@
-import { decryptData, encryptData, EncryptedPayload, deriveMasterKey } from "@pwmnger/crypto";
+import {
+  decryptData,
+  encryptData,
+  EncryptedPayload,
+  deriveMasterKey,
+} from "@pwmnger/crypto";
 import { EncryptedVault, createEmptyVault } from "@pwmnger/vault";
 
-export async function createEncryptedVault(masterPassword: string): Promise<EncryptedVault> {
+export async function createEncryptedVault(
+  masterPassword: string,
+): Promise<EncryptedVault> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const key = await deriveMasterKey(masterPassword, salt);
   const emptyVault = createEmptyVault();
-  const encryptedData = await encryptData(key, JSON.stringify(emptyVault.entries));
+  const encryptedData = await encryptData(
+    key,
+    JSON.stringify(emptyVault.entries),
+  );
 
   return {
     data: encryptedData,
@@ -17,10 +27,8 @@ export async function createEncryptedVault(masterPassword: string): Promise<Encr
 
 export async function decryptVault(
   vault: EncryptedVault,
-  masterPassword: string
+  masterPassword: string,
 ): Promise<any> {
-    
-
   try {
     const salt = new Uint8Array(vault.salt);
     const key = await deriveMasterKey(masterPassword, salt);
@@ -35,7 +43,7 @@ export async function decryptVault(
 export async function encryptVault(
   entries: any[],
   masterPassword: string,
-  salt: Uint8Array
+  salt: Uint8Array,
 ): Promise<EncryptedVault> {
   const key = await deriveMasterKey(masterPassword, salt as any);
   const encryptedData = await encryptData(key, JSON.stringify(entries));
