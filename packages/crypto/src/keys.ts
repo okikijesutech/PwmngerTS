@@ -41,7 +41,7 @@ export async function unwrapKey(
     unwrappingKey,
     { name: "AES-GCM", iv },
     unwrappedKeyAlgorithm,
-    false, // extractable
+    true, // extractable
     keyUsages,
   );
 }

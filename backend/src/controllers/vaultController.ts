@@ -6,7 +6,7 @@ interface AuthRequest extends Request {
 }
 
 export async function uploadVault(req: AuthRequest, res: Response) {
-  const { encryptedVault } = req.body;
+  const { vaultPayload } = req.body;
   const userId = req.user!.userId;
 
   // Check for conflicts: prevent older data from overwriting newer cloud data
@@ -24,7 +24,7 @@ export async function uploadVault(req: AuthRequest, res: Response) {
     }
 
     const cloudUpdatedAt = cloudVault.updatedAt || 0;
-    const clientUpdatedAt = encryptedVault.updatedAt || 0;
+    const clientUpdatedAt = vaultPayload.updatedAt || 0;
 
     if (cloudUpdatedAt > clientUpdatedAt) {
       return res.status(409).json({
@@ -35,10 +35,12 @@ export async function uploadVault(req: AuthRequest, res: Response) {
     }
   }
 
+  const encryptedString = JSON.stringify(vaultPayload);
+
   await prisma.vault.upsert({
     where: { userId },
-    update: { encrypted: encryptedVault },
-    create: { encrypted: encryptedVault, userId },
+    update: { encrypted: encryptedString },
+    create: { encrypted: encryptedString, userId },
   });
 
   res.json({ success: true });
@@ -48,7 +50,12 @@ export async function downloadVault(req: AuthRequest, res: Response) {
   const userId = req.user!.userId;
 
   const vault = await prisma.vault.findUnique({ where: { userId } });
-  if (!vault) return res.json({ encryptedVault: null });
+  if (!vault) return res.json({ vaultPayload: null });
 
-  res.json({ encryptedVault: vault.encrypted });
+  const payload =
+    typeof vault.encrypted === "string"
+      ? JSON.parse(vault.encrypted)
+      : vault.encrypted;
+
+  res.json({ vaultPayload: payload });
 }

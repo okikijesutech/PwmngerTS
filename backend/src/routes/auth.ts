@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { register, login } from "../controllers/authController";
-
+import { register, login, getMe } from "../controllers/authController";
+import { setup2FA, verify2FASetup } from "../controllers/twoFactorController";
+import { requireAuth } from "../middleware/authMiddleware";
 import { body, validationResult } from "express-validator";
 import rateLimit from "express-rate-limit";
 import type { Request, Response, NextFunction } from "express";
@@ -30,11 +31,9 @@ const registerValidation = [
 
 router.post("/register", authLimiter, registerValidation, validate, register);
 router.post("/login", authLimiter, login);
+router.get("/me", requireAuth, getMe);
 
 // 2FA Routes
-import { setup2FA, verify2FASetup } from "../controllers/twoFactorController";
-import { requireAuth } from "../middleware/authMiddleware";
-
 router.post("/2fa/setup", requireAuth, setup2FA);
 router.post("/2fa/verify", requireAuth, verify2FASetup);
 

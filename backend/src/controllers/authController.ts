@@ -50,3 +50,14 @@ export async function login(req: Request, res: Response) {
 
   res.json({ token });
 }
+
+export async function getMe(req: Request, res: Response) {
+  const userId = (req as any).user.userId;
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  res.json({
+    email: user.email,
+    is2FAEnabled: !!user.twoFactorSecret,
+  });
+}

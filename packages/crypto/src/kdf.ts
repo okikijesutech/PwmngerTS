@@ -21,7 +21,7 @@ export async function deriveMasterKey(
     hash as any,
     { name: "AES-GCM" },
     false,
-    ["encrypt", "decrypt"],
+    ["encrypt", "decrypt", "wrapKey", "unwrapKey"],
   );
 }
 

@@ -1,0 +1,28 @@
+{
+  "name": "@pwmnger/mobile",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "expo": "~54.0.33",
+    "expo-status-bar": "~3.0.9",
+    "react": "18.3.1",
+    "react-native": "0.76.7",
+    "react-native-get-random-values": "^1.11.0",
+    "expo-standard-web-crypto": "^1.0.0",
+    "@pwmnger/crypto": "workspace:*",
+    "@pwmnger/app-logic": "workspace:*",
+    "@pwmnger/vault": "workspace:*",
+    "@pwmnger/storage": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.12",
+    "typescript": "^5.3.3"
+  },
+  "private": true
+}

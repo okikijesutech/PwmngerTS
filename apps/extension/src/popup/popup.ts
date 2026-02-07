@@ -197,12 +197,13 @@ if (typeof document !== "undefined") {
         await syncVaultWithCloud(token);
 
         // Auto-unlock
-        const entries = await decryptVault(newVault, password);
-        currentEntries = entries;
+        const vaultData = await decryptVault(newVault, password);
+        currentEntries = vaultData.entries || [];
+        currentFolders = vaultData.folders || [];
         currentMaster = password;
         currentSalt = new Uint8Array(newVault.salt);
 
-        renderEntries(entries, entriesUl);
+        renderEntries(currentEntries, entriesUl);
         registerDiv.hidden = true;
         vaultDiv.hidden = false;
       } catch (e: any) {
@@ -235,9 +236,11 @@ if (typeof document !== "undefined") {
         const encryptedVault = await loadVault();
         if (encryptedVault) {
           const vaultData = await decryptVault(encryptedVault, password);
-          currentEntries = vaultData.entries;
+          currentEntries = vaultData.entries || [];
           currentFolders = vaultData.folders || [];
           currentMaster = password;
+          currentSalt = new Uint8Array(encryptedVault.salt);
+
           renderEntries(currentEntries, entriesUl);
           loginDiv.hidden = true;
           vaultDiv.hidden = false;
@@ -270,9 +273,10 @@ if (typeof document !== "undefined") {
         await syncVaultWithCloud(token);
         const updatedVault = await loadVault();
         if (updatedVault) {
-          const entries = await decryptVault(updatedVault, currentMaster);
-          currentEntries = entries;
-          renderEntries(entries, entriesUl);
+          const vaultData = await decryptVault(updatedVault, currentMaster);
+          currentEntries = vaultData.entries || [];
+          currentFolders = vaultData.folders || [];
+          renderEntries(currentEntries, entriesUl);
           alert("Sync Success!");
         }
       } catch (e: any) {
@@ -359,7 +363,7 @@ if (typeof document !== "undefined") {
       try {
         if (!currentSalt) throw new Error("Salt missing");
         const updatedVault = await encryptVault(
-          currentEntries,
+          { entries: currentEntries, folders: currentFolders },
           currentMaster,
           currentSalt,
         );

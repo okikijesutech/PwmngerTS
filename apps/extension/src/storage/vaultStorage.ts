@@ -1,25 +1,26 @@
-import { EncryptedVault } from "@pwmnger/vault";
+import { StoredVault } from "@pwmnger/storage";
 
 const VAULT_KEY = "pwmnger_vault";
 
-export async function saveVault(vault: EncryptedVault): Promise<void> {
+export async function saveVault(vault: StoredVault): Promise<void> {
   await chrome.storage.local.set({ [VAULT_KEY]: vault });
 }
 
-function isEncryptedVault(value: unknown): value is EncryptedVault {
+function isStoredVault(value: unknown): value is StoredVault {
   return (
     typeof value === "object" &&
     value !== null &&
-    "data" in value &&
-    "updatedAt" in value
+    "encryptedVault" in value &&
+    "encryptedVaultKey" in value &&
+    "salt" in value
   );
 }
 
-export async function loadVault(): Promise<EncryptedVault | null> {
+export async function loadVault(): Promise<StoredVault | null> {
   const result = await chrome.storage.local.get(VAULT_KEY);
   const vault = result[VAULT_KEY];
 
-  if (isEncryptedVault(vault)) {
+  if (isStoredVault(vault)) {
     return vault;
   }
 

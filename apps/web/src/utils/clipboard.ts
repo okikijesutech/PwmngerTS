@@ -1,10 +1,18 @@
 export async function copyWithAutoClear(text: string, timeoutMs = 7000) {
-  await navigator.clipboard.writeText(text);
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (err) {
+    console.error("Failed to copy to clipboard:", err);
+  }
 
   setTimeout(async () => {
-    const current = await navigator.clipboard.readText();
-    if (current === text) {
-      await navigator.clipboard.writeText("");
+    try {
+      const current = await navigator.clipboard.readText();
+      if (current === text) {
+        await navigator.clipboard.writeText("");
+      }
+    } catch (err) {
+      // Fail silently on clear if document is not focused
     }
   }, timeoutMs);
 }

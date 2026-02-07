@@ -18,6 +18,8 @@ export default defineConfig({
         "../../packages/appLogic/src",
       ),
       "@pwmnger/ui": path.resolve(__dirname, "../../packages/ui/src"),
+      react: path.resolve(__dirname, "node_modules/react"),
+      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
     },
   },
 });

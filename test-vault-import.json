@@ -1,0 +1,26 @@
+{
+  "entries": [
+    {
+      "id": "test-entry-1",
+      "site": "google.com",
+      "username": "tester@gmail.com",
+      "password": "Password123!",
+      "lastModified": 1707327530000
+    },
+    {
+      "id": "test-entry-2",
+      "site": "github.com",
+      "username": "okikijesutech",
+      "password": "SecureGithubPassword",
+      "lastModified": 1707327540000,
+      "folderId": "test-folder-1"
+    }
+  ],
+  "folders": [
+    {
+      "id": "test-folder-1",
+      "name": "Social Media"
+    }
+  ],
+  "updatedAt": 1707327550000
+}

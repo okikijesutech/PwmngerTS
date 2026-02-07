@@ -15,7 +15,9 @@ import {
   loginAccount,
   addVaultEntry,
   deleteVaultEntry,
+  updateVaultEntry,
 } from "@pwmnger/app-logic";
+import type { Vault } from "@pwmnger/vault";
 import { Toast } from "@pwmnger/ui";
 import { UnlockVault } from "./components/Vault/UnlockVault";
 import { RegisterVault } from "./components/Vault/RegisterVault";
@@ -28,24 +30,52 @@ export default function App() {
   const [refresh, setRefresh] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isAuthAction, setIsAuthAction] = useState(false);
+  const [vaultExists, setVaultExists] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState<{
     message: string;
     type: "success" | "error";
   } | null>(null);
-  const [vaultExists, setVaultExists] = useState(false);
-  // Track master email/password in memory only during session
   const [session, setSession] = useState<{ email: string } | null>(null);
+  const [vault, setVault] = useState<Vault | null>(null);
   const [view, setView] = useState<ViewState>("LOADING");
+
+  const updateVaultState = () => {
+    if (isUnlocked()) {
+      const v = getVault();
+      setVault({ ...v, entries: [...v.entries], folders: [...(v.folders || [])] });
+    } else {
+      setVault(null);
+    }
+  };
+
+  async function update2FAStatus() {
+    const token = localStorage.getItem("pwmnger_token");
+    if (token) {
+      import("@pwmnger/app-logic").then(async ({ getAccountStatus }) => {
+        try {
+          const status = await getAccountStatus(token);
+          setIs2FAEnabled(status.is2FAEnabled);
+        } catch (e) {
+          console.error("Failed to fetch 2FA status", e);
+        }
+      });
+    }
+  }
 
   useEffect(() => {
     async function init() {
       const exists = await checkVaultExists();
       setVaultExists(exists);
-      if (exists) {
+      if (isUnlocked()) {
+        updateVaultState();
+        update2FAStatus();
+        setView("DASHBOARD");
+      } else if (exists) {
         setView("UNLOCK");
       } else {
-        setView("LOGIN"); // Default to login, user can switch to register
+        setView("LOGIN");
       }
     }
     init();
@@ -57,6 +87,9 @@ export default function App() {
     try {
       await unlockVault(password);
       setError("");
+      updateVaultState();
+      update2FAStatus();
+      setView("DASHBOARD");
       setRefresh((prev) => prev + 1);
       setToast({ message: "Vault unlocked!", type: "success" });
     } catch (err: any) {
@@ -72,27 +105,19 @@ export default function App() {
     setIsAuthAction(true);
     setError("");
     try {
-      // 1. Authenticate with backend to get token
       const jwt = await loginAccount(email, password, twoFactorToken);
       localStorage.setItem("pwmnger_token", jwt);
       setSession({ email });
-
-      // 2. If local vault exists, we need to unlock it separately
-      // In a real scenario, we might download the vault here if it doesn't exist locally
-      if (vaultExists) {
-        await unlockVault(password);
-        setView("DASHBOARD");
-        setToast({ message: "Welcome back!", type: "success" });
-      } else {
-        // IDK flow: Download and decrypt? For now, if no local vault, assume sync needed
-        // But for this MVP let's just create a new one or sync
-        await syncVaultWithCloud(jwt);
-        setView("DASHBOARD");
-      }
+      await syncVaultWithCloud(jwt);
+      await unlockVault(password);
+      updateVaultState();
+      update2FAStatus();
+      setView("DASHBOARD");
+      setRefresh((prev) => prev + 1);
+      setToast({ message: "Welcome back!", type: "success" });
     } catch (err: any) {
       console.error("Login Error:", err);
       setError(err.message || "Login failed");
-      // Re-throw if it requires 2FA so LoginForm can catch it
       if (err.requires2FA) throw err;
     } finally {
       setIsAuthAction(false);
@@ -103,18 +128,14 @@ export default function App() {
     setIsAuthAction(true);
     setError("");
     try {
-      console.log("App: Creating account...");
       await registerAccount(email, password);
-
-      console.log("App: Creating local vault...");
       await createNewVault(password);
-
-      console.log("App: Logging in...");
       const jwt = await loginAccount(email, password);
       localStorage.setItem("pwmnger_token", jwt);
-
       await unlockVault(password);
       setSession({ email });
+      updateVaultState();
+      update2FAStatus();
       setRefresh((prev) => prev + 1);
       setView("DASHBOARD");
       setToast({
@@ -133,10 +154,16 @@ export default function App() {
     site: string,
     username: string,
     password: string,
+    folderId?: string | null,
   ) {
     try {
-      await addVaultEntry({ site, username, password });
-      setRefresh((prev) => prev + 1);
+      await addVaultEntry({
+        site,
+        username,
+        password,
+        ...(folderId ? { folderId: folderId } : {}),
+      });
+      updateVaultState();
       setToast({ message: "Entry added successfully", type: "success" });
     } catch (err) {
       console.error("Add Entry Error:", err);
@@ -144,10 +171,53 @@ export default function App() {
     }
   }
 
+  async function handleImportVault(jsonString: string) {
+    try {
+      const { importVaultData } = await import("@pwmnger/app-logic");
+      await importVaultData(jsonString);
+      updateVaultState();
+      setToast({ message: "Vault imported successfully!", type: "success" });
+    } catch (err: any) {
+      setToast({ message: "Import failed: " + err.message, type: "error" });
+    }
+  }
+
+  async function handleCreateFolder(name: string) {
+    try {
+      const { createFolder } = await import("@pwmnger/app-logic");
+      await createFolder(name);
+      updateVaultState();
+      setToast({ message: "Folder created", type: "success" });
+    } catch (e: any) {
+      setToast({ message: "Failed to create folder", type: "error" });
+    }
+  }
+
+  async function handleDeleteFolder(id: string) {
+    try {
+      const { deleteFolder } = await import("@pwmnger/app-logic");
+      await deleteFolder(id);
+      updateVaultState();
+      setToast({ message: "Folder deleted", type: "success" });
+    } catch (e) {
+      setToast({ message: "Failed to delete folder", type: "error" });
+    }
+  }
+
+  async function handleMoveEntry(entryId: string, folderId: string | null) {
+    try {
+      const { moveEntryToFolder } = await import("@pwmnger/app-logic");
+      await moveEntryToFolder(entryId, folderId);
+      updateVaultState();
+    } catch (e) {
+      setToast({ message: "Failed to move entry", type: "error" });
+    }
+  }
+
   async function handleDeleteEntry(id: string) {
     try {
       await deleteVaultEntry(id);
-      setRefresh((prev) => prev + 1);
+      updateVaultState();
       setToast({ message: "Entry deleted", type: "success" });
     } catch (err) {
       console.error("Delete Entry Error:", err);
@@ -155,6 +225,17 @@ export default function App() {
         message: "Failed to delete entry from storage",
         type: "error",
       });
+    }
+  }
+
+  async function handleEditEntry(id: string, site: string, user: string, pass: string) {
+    try {
+      await updateVaultEntry(id, { site, username: user, password: pass });
+      updateVaultState();
+      setToast({ message: "Entry updated", type: "success" });
+    } catch (err) {
+      console.error("Edit Entry Error:", err);
+      setToast({ message: "Failed to update entry", type: "error" });
     }
   }
 
@@ -166,7 +247,7 @@ export default function App() {
     setIsSyncing(true);
     try {
       await syncVaultWithCloud(token);
-      setRefresh((prev) => prev + 1);
+      updateVaultState();
       setToast({ message: "Vault synced with cloud!", type: "success" });
     } catch (err: any) {
       console.error(err);
@@ -178,18 +259,12 @@ export default function App() {
 
   const handleLock = () => {
     lockVault();
+    updateVaultState();
     setRefresh((prev) => prev + 1);
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-        padding: "40px 20px",
-        fontFamily: "Inter, system-ui, -apple-system, sans-serif",
-      }}
-    >
+    <div>
       {toast && (
         <Toast
           message={toast.message}
@@ -198,13 +273,13 @@ export default function App() {
         />
       )}
 
-      <main style={{ maxWidth: 900, margin: "auto" }}>
+      <div>
         {view === "LOADING" && (
-          <p style={{ textAlign: "center" }}>Loading...</p>
+          <p style={{ textAlign: "center", padding: 40 }}>Loading...</p>
         )}
 
         {view === "LOGIN" && (
-          <div style={{ maxWidth: 450, margin: "auto" }}>
+          <div style={{ maxWidth: 450, margin: "100px auto" }}>
             <LoginForm
               onLogin={handleLogin}
               onGoToRegister={() => setView("REGISTER")}
@@ -215,7 +290,7 @@ export default function App() {
         )}
 
         {view === "REGISTER" && (
-          <div style={{ maxWidth: 450, margin: "auto" }}>
+          <div style={{ maxWidth: 450, margin: "100px auto" }}>
             <RegisterVault
               onRegister={handleRegister}
               onGoToLogin={() => setView("LOGIN")}
@@ -226,7 +301,7 @@ export default function App() {
         )}
 
         {view === "UNLOCK" && (
-          <div style={{ maxWidth: 450, margin: "auto" }}>
+          <div style={{ maxWidth: 450, margin: "100px auto" }}>
             <UnlockVault onUnlock={handleUnlock} error={error} />
             <p style={{ textAlign: "center", marginTop: 20 }}>
               <span
@@ -242,28 +317,37 @@ export default function App() {
           </div>
         )}
 
-        {view === "DASHBOARD" && (
+        {view === "DASHBOARD" && vault && (
           <VaultDashboard
-            vault={getVault()}
+            vault={vault as Vault}
             onSync={handleSync}
             onLock={handleLock}
             onAddEntry={handleAddEntry}
             onDeleteEntry={handleDeleteEntry}
+            onCreateFolder={handleCreateFolder}
+            onDeleteFolder={handleDeleteFolder}
+            onMoveEntry={handleMoveEntry}
+            onEditEntry={handleEditEntry}
+            onImportVault={handleImportVault}
+            onRefreshAccountStatus={update2FAStatus}
             isSyncing={isSyncing}
+            is2FAEnabled={is2FAEnabled}
           />
         )}
-      </main>
+      </div>
 
-      <footer
-        style={{
-          marginTop: 40,
-          textAlign: "center",
-          color: "#777",
-          fontSize: 13,
-        }}
-      >
-        &copy; 2026 PwmngerTS &bull; Secure Zero-Knowledge Storage
-      </footer>
+      {(view !== "DASHBOARD") && (
+        <footer
+          style={{
+            marginTop: 40,
+            textAlign: "center",
+            color: "#777",
+            fontSize: 13,
+          }}
+        >
+          &copy; 2026 PwmngerTS &bull; Secure Zero-Knowledge Storage
+        </footer>
+      )}
     </div>
   );
 }

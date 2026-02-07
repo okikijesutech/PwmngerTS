@@ -77,3 +77,11 @@ export async function verify2FASetup(
   if (!res.ok) throw new Error("Invalid Token");
   return res.json();
 }
+
+export async function getAccountStatus(token: string) {
+  const res = await fetch(`${BASE_URL}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to fetch account status");
+  return res.json(); // { email, is2FAEnabled }
+}

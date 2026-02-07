@@ -156,6 +156,21 @@ export async function deleteVaultEntry(id: string) {
   }
 }
 
+export async function updateVaultEntry(
+  id: string,
+  updates: Partial<Omit<VaultEntry, "id" | "lastModified">>,
+) {
+  const vault = getVault();
+  const entry = vault.entries.find((e) => e.id === id);
+  if (!entry) throw new Error("Entry not found");
+
+  Object.assign(entry, updates);
+  entry.lastModified = Date.now();
+
+  await saveCurrentVault();
+  return entry;
+}
+
 // --- Folder Management ---
 
 export async function createFolder(name: string) {
@@ -216,11 +231,21 @@ export function resetAutoLock() {
 }
 
 export async function exportEncryptedVault() {
-  if (!vaultKey || !unlockedVault) {
-    throw new Error("Vault is not unlocked");
+  const stored = await loadVault();
+  if (!stored) throw new Error("No vault found in storage");
+
+  // We sync the entire stored object (salt, encryptedVault, encryptedVaultKey)
+  // But we use the latest memory-state for the encryptedVault part if unlocked
+  if (unlockedVault && vaultKey) {
+    const latestEncryptedVault = await encryptData(vaultKey, unlockedVault);
+    return {
+      ...stored,
+      encryptedVault: latestEncryptedVault,
+      updatedAt: unlockedVault.updatedAt,
+    };
   }
-  const encryptedVault = await encryptData(vaultKey, unlockedVault);
-  return encryptedVault;
+
+  return stored;
 }
 
 // Export decrypted vault as JSON (For user backup)
@@ -257,13 +282,26 @@ export async function importVaultData(jsonString: string) {
   }
 }
 
-export async function importEncryptedVault(encryptedVault: any) {
-  if (!vaultKey) {
-    throw new Error("Vault is not unlocked");
+export async function importEncryptedVault(payload: any) {
+  if (!payload || !payload.salt || !payload.encryptedVaultKey) {
+    throw new Error("Invalid vault payload from cloud");
   }
-  const remoteVault = await decryptData<Vault>(vaultKey, encryptedVault);
-  unlockedVault = mergeVaults(getVault(), remoteVault);
-  await saveCurrentVault();
+
+  // If we are unlocked, we merge
+  if (vaultKey && unlockedVault) {
+    const remoteVault = await decryptData<Vault>(vaultKey, payload.encryptedVault);
+    unlockedVault = mergeVaults(unlockedVault, remoteVault);
+    await saveCurrentVault();
+  } else {
+    // If locked (e.g. fresh login), we just save the metadata to storage
+    // so we can unlock it later with the password.
+    await saveVault({
+      salt: payload.salt,
+      encryptedVault: payload.encryptedVault,
+      encryptedVaultKey: payload.encryptedVaultKey,
+      updatedAt: payload.updatedAt || Date.now(),
+    });
+  }
 }
 
 export async function exportRecoveryData() {
@@ -307,7 +345,7 @@ export async function syncToCloud(token: string) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ encryptedVault: encrypted }),
+    body: JSON.stringify({ vaultPayload: encrypted }),
   });
 }
 
@@ -318,9 +356,9 @@ export async function syncFromCloud(token: string) {
     },
   });
 
-  const { encryptedVault } = await res.json();
-  if (encryptedVault) {
-    await importEncryptedVault(encryptedVault);
+  const { vaultPayload } = await res.json();
+  if (vaultPayload) {
+    await importEncryptedVault(vaultPayload);
   }
 }
 export async function syncVaultWithCloud(token: string) {
@@ -336,7 +374,7 @@ export async function syncVaultWithCloud(token: string) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ encryptedVault: encrypted }),
+    body: JSON.stringify({ vaultPayload: encrypted }),
   });
 
   if (res.status === 409) {
