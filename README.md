@@ -44,12 +44,15 @@ graph TD
 PwmngerTS/
 ├─ apps/
 │  ├─ web/          # React + Vite Web Vault
-│  └─ extension/    # Browser Extension (Chrome/Edge)
+│  ├─ extension/    # Browser Extension (Chrome/Edge)
+│  └─ mobile/       # Mobile App (Draft/Planned)
 │
 ├─ packages/
 │  ├─ crypto/       # Shared Cryptography Library
 │  ├─ appLogic/     # Core Business Logic
-│  └─ vault/        # Types & Validation
+│  ├─ vault/        # Types & Validation
+│  ├─ storage/      # Persistence Layer (IndexedDB/WebSQL)
+│  └─ ui/           # Shared React Components
 │
 ├─ backend/         # Node.js API (Storage & Auth)
 │
@@ -74,6 +77,7 @@ For developers and self-hosting:
 
     ```bash
     git clone https://github.com/okikijesutech/PwmngerTS.git
+    cd PwmngerTS
     npm install
     ```
 
@@ -87,59 +91,6 @@ For developers and self-hosting:
 3.  **Access**
     - Web Vault: `http://localhost:5173`
     - API: `http://localhost:4000`
-
-### 4️⃣ (Optional) Start the backend
-
-```bash
-cd backend
-npm run dev
-```
-
-Backend runs on: **http://localhost:4000**
-
-### 5️⃣ Build the Extension
-
-```bash
-cd apps/extension
-npm run build
-```
-
-Then load the `apps/extension/dist` directory as an **unpacked extension** in your browser.
-
----
-
-## 🔐 Security Model
-
-- ✅ All encryption is **client-side** (Web Crypto API)
-- ✅ Master password derives encryption keys using **Argon2id**
-- ✅ Vault encrypted with **AES-256-GCM**
-- ✅ Backend stores only **encrypted blobs**
-- ✅ No plaintext passwords transmitted or stored
-- ☁️ Cloud Sync (Optional)
-
-Cloud sync uses the Node.js backend to:
-
-- Authenticate users (JWT)
-- Store encrypted vault blobs
-- Never decrypt vault data
-
-Users can manually export/import vaults as encrypted JSON backups.
-
-```bash
-cd backend
-npm run dev
-```
-
-Backend runs on: **http://localhost:4000**
-
-### 5️⃣ Build the Extension
-
-```bash
-cd apps/extension
-npm run build
-```
-
-Then load the `apps/extension/dist` directory as an **unpacked extension** in your browser.
 
 ---
 
@@ -175,8 +126,11 @@ Users can manually export/import vaults as encrypted JSON backups.
 Tests are organized by module:
 
 ```bash
-# Run all tests
+# Run all unit tests
 npm test
+
+# Run E2E tests (Playwright)
+npm run test:e2e
 
 # Test specific packages
 npm run test:crypto      # Crypto functions
@@ -191,29 +145,13 @@ npm run test:integration # Full integration
 - ✅ Unit tests for crypto, vault, and storage
 - ✅ Integration tests for vault operations
 - ✅ Controller tests for API endpoints
-- ⏳ E2E tests (planned)
+- ✅ E2E tests (Playwright)
 
 ---
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
-
-**Quick start:**
-
-1. Fork the repo
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-**Good first contributions:**
-
-- UI improvements & styling
-- Additional tests
-- Accessibility improvements
-- Documentation
-- Bug fixes
 
 ---
 
@@ -244,19 +182,17 @@ PwmngerTS was built to:
 - ✅ Build cross-platform apps (Web, Mobile, Extension)
 - ✅ Create reusable crypto and vault packages
 
-This is an open-source learning project. Feel free to fork, study, and improve!
-
 ---
 
 ## 🗺️ Roadmap
 
 - [x] Browser extension version
+- [x] Two-factor authentication
+- [x] End-to-end tests
 - [ ] Mobile app (React Native)
-- [ ] Two-factor authentication
 - [ ] Password strength meter
 - [ ] Auto-fill integration
 - [ ] Passkey support
-- [ ] End-to-end tests
 - [ ] Professional security audit
 
 ---
