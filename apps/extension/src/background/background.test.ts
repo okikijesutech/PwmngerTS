@@ -1,16 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Basic mock for chrome API
-const chromeMock = {
+// Mock global chrome
+(globalThis as any).chrome = {
   runtime: {
-    onInstalled: {
-      addListener: vi.fn(),
-    },
+    onInstalled: { addListener: vi.fn() },
+    onMessage: { addListener: vi.fn() },
+    sendMessage: vi.fn(),
   },
+  action: {
+    setBadgeText: vi.fn(),
+    setBadgeBackgroundColor: vi.fn(),
+  }
 };
-
-// @ts-ignore
-global.chrome = chromeMock;
 
 describe('Background Script', () => {
   beforeEach(() => {
@@ -21,6 +22,6 @@ describe('Background Script', () => {
     // Import the background script to trigger its execution
     await import('./background');
     
-    expect(chromeMock.runtime.onInstalled.addListener).toHaveBeenCalled();
+    expect(chrome.runtime.onInstalled.addListener).toHaveBeenCalled();
   });
 });

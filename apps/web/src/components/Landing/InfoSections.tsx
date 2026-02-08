@@ -139,6 +139,65 @@ export const InfoSections: React.FC<InfoSectionsProps> = ({ onRegister }) => {
         </div>
       </section>
 
+      <section id="install-extension" className="install-guide">
+         <div className="section-header reveal-on-scroll">
+            <h2>Manual <span className="text-gradient">Extension</span> Setup</h2>
+            <p>Follow these steps to install the PwmngerTS browser guardian.</p>
+         </div>
+         <div className="guide-content glass-premium reveal-on-scroll">
+            <div className="guide-layout">
+              <div className="guide-text">
+                <ol>
+                  <li><strong>Download:</strong> Get the <code>extension-build.zip</code> from <a href="https://github.com/okikijesutech/PwmngerTS/releases" target="_blank" className="text-link">GitHub Releases</a>.</li>
+                  <li><strong>Unpack:</strong> Extract the <code>.zip</code> file to a permanent folder on your drive.</li>
+                  <li><strong>Extensions Page:</strong> Open <code>chrome://extensions</code> in your browser.</li>
+                  <li><strong>Dev Mode:</strong> Toggle <strong>"Developer mode"</strong> in the top-right corner.</li>
+                  <li><strong>Install:</strong> Click <strong>"Load unpacked"</strong> and select the extracted folder.</li>
+                </ol>
+                <div style={{ marginTop: '32px' }}>
+                  <Button onClick={() => window.open('https://github.com/okikijesutech/PwmngerTS/releases', '_blank')}>Download Latest Zip</Button>
+                </div>
+              </div>
+              <div className="guide-visual">
+                <div className="browser-mockup">
+                   <div className="mockup-header">
+                      <div className="dot"></div><div className="dot"></div><div className="dot"></div>
+                   </div>
+                   <div className="mockup-content">
+                      <div className="mockup-toggle">Developer mode <span>●</span></div>
+                   </div>
+                </div>
+              </div>
+            </div>
+         </div>
+      </section>
+
+      <section id="install-mobile" className="install-guide">
+         <div className="section-header reveal-on-scroll">
+            <h2>Android <span className="text-gradient">Sideload</span> Guide</h2>
+            <p>Get the full PwmngerTS experience on your mobile device.</p>
+         </div>
+         <div className="guide-content glass-premium reveal-on-scroll">
+            <div className="mobile-guide-grid">
+              <div className="qr-box">
+                <div className="qr-mock">📱</div>
+                <p style={{ marginTop: 12, fontSize: 13, opacity: 0.6 }}>Scan to Download APK</p>
+              </div>
+              <div className="guide-steps">
+                <ol>
+                  <li><strong>APK Download:</strong> Download <code>PwmngerTS.apk</code> from the <a href="https://github.com/okikijesutech/PwmngerTS/releases" target="_blank" className="text-link">latest release</a>.</li>
+                  <li><strong>Permissions:</strong> If prompted, allow <strong>"Install from Unknown Sources"</strong> in your settings.</li>
+                  <li><strong>Launch:</strong> Open the file and follow the Android system prompts.</li>
+                  <li><strong>Secure:</strong> Login and enable Biometric Lock for maximum safety.</li>
+                </ol>
+                <div style={{ marginTop: '24px' }}>
+                  <Button variant="secondary" onClick={() => window.open('https://github.com/okikijesutech/PwmngerTS/releases', '_blank')}>Get Android APK</Button>
+                </div>
+              </div>
+            </div>
+         </div>
+      </section>
+
       <section className="final-cta reveal-on-scroll">
          <div className="cta-inner glass-premium">
             <div className="cta-glow"></div>
@@ -264,6 +323,67 @@ export const InfoSections: React.FC<InfoSectionsProps> = ({ onRegister }) => {
           box-shadow: 0 20px 50px var(--primary-glow) !important;
           border-radius: 16px !important;
         }
+
+        .guide-layout { display: flex; gap: 48px; align-items: center; }
+        .guide-text { flex: 1.5; }
+        .guide-visual { flex: 1; }
+        .browser-mockup {
+          background: #1e1e1e;
+          border-radius: 12px;
+          border: 1px solid rgba(255,255,255,0.1);
+          overflow: hidden;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+        .mockup-header {
+          background: #333;
+          padding: 8px 12px;
+          display: flex;
+          gap: 6px;
+        }
+        .mockup-header .dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
+        .mockup-content { padding: 40px 20px; text-align: center; }
+        .mockup-toggle {
+          background: rgba(255,255,255,0.05);
+          padding: 12px 20px;
+          border-radius: 8px;
+          font-size: 14px;
+          display: inline-flex;
+          align-items: center;
+          gap: 12px;
+          color: var(--text-muted);
+        }
+        .mockup-toggle span { color: var(--primary); font-size: 18px; }
+
+        .text-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+        .text-link:hover { text-decoration: underline; }
+
+        .qr-mock {
+          width: 150px;
+          height: 150px;
+          background: rgba(255,255,255,0.05);
+          border-radius: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 60px;
+          border: 1px dashed rgba(255,255,255,0.1);
+        }
+
+        .glass-pill {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          padding: 10px 20px;
+          border-radius: 100px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-size: 14px;
+          color: white;
+          text-decoration: none;
+          transition: all 0.3s ease;
+        }
+        .glass-pill:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); border-color: var(--primary); }
+        .glass-pill .icon { font-size: 18px; }
 
         @media (max-width: 1024px) {
           .workflow-steps, .use-case-grid, .faq-grid { grid-template-columns: 1fr; }

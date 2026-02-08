@@ -28,6 +28,14 @@ export const Hero: React.FC<HeroProps> = ({ onRegister }) => {
             Learn the Science
           </button>
         </div>
+        <div className="download-actions" style={{ marginTop: '24px', display: 'flex', gap: '16px', opacity: 0.9 }}>
+          <a href="#install-extension" className="download-link glass-pill">
+            <span className="icon">🧩</span> <span>Get Browser Extension</span>
+          </a>
+          <a href="#install-mobile" className="download-link glass-pill">
+            <span className="icon">📱</span> <span>Get Android App</span>
+          </a>
+        </div>
       </div>
       <div className="hero-visual" style={{ transform: `translate(${mousePos.x}px, ${mousePos.y}px)` }}>
         <div className="glass-shield">
@@ -95,6 +103,18 @@ export const Hero: React.FC<HeroProps> = ({ onRegister }) => {
           transform: translateY(-4px); 
           border-color: rgba(255,255,255,0.2);
         }
+
+        .download-link {
+          color: var(--text-muted);
+          text-decoration: none;
+          font-size: 14px;
+          font-weight: 600;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .download-link:hover { color: white; transform: translateY(-2px); }
 
         .hero-visual {
           flex: 0.8;
