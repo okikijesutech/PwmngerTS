@@ -94,6 +94,24 @@ export async function unwrapKey(
 ): Promise<CryptoKey>;
 ```
 
+## Account Recovery
+
+If the master password is lost, the vault can be recovered using an Emergency Recovery Kit.
+
+### Recovery Key Generation
+
+The recovery key is a high-entropy 256-bit key that is provided to the user in a human-readable format (mnemonic or hex string).
+
+1. **Vault Key Protection**: The vault key is wrapped with the recovery key, just as it is with the master key.
+2. **Persistence**: The wrapped vault key (using the recovery key) is stored alongside the standard vault metadata.
+3. **Usage**: During recovery, the user provides their recovery key, which is used to unwrap the vault key and regain access to the plaintext vault.
+
+```typescript
+// From packages/appLogic/src/vaultManager.ts
+export async function generateRecoveryKit(masterKey: CryptoKey, vault: Vault): Promise<string>;
+export async function recoverVault(recoveryKey: string, encryptedVault: EncryptedVault): Promise<Vault>;
+```
+
 ## Data Flow
 
 ### Vault Creation

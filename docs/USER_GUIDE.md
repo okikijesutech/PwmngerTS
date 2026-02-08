@@ -28,6 +28,12 @@ The PwmngerTS Extension allows you to access your vault directly from your brows
 - **Folders**: Use the sidebar to create folders (e.g., "Work", "Personal", "Finance").
 - **Move Entries**: Select an entry and use the "Move" dropdown to organize it.
 
+## ☁️ Cloud Sync
+
+Sync happens automatically whenever you unlock your vault or save a new entry.
+- **Fast Sync**: We use response compression to ensure sync is fast even on mobile data.
+- **Offline Access**: Your vault is saved locally in your browser's secure storage (IndexedDB), so you can still access it without an internet connection.
+
 ## 🛡️ Security Features
 
 - **Zero-Knowledge**: Your password is encrypted _on your device_ before it ever reaches our server. We cannot see your data.

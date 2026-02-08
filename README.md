@@ -16,6 +16,7 @@ All encryption happens **locally on the user's device** — the server never see
 - 🛡️ **Two-Factor Authentication (2FA):** Secure login with TOTP enforcement.
 - 🆘 **Account Recovery:** Restore access via Emergency Recovery Kit if password is lost.
 - 🩺 **Password Health:** Analyze vault for weak/reused credentials.
+- ⚡ **Performance Optimized:** Route-based lazy loading, component memoization, and backend response compression.
 - ☁️ **Secure Sync:** Encrypted blob synchronization to self-hosted backend.
 - 🌍 **Cross-Platform:** Web Vault and Browser Extension.
 
@@ -78,14 +79,15 @@ For developers and self-hosting:
     ```bash
     git clone https://github.com/okikijesutech/PwmngerTS.git
     cd PwmngerTS
-    npm install
+    npm install -g pnpm
+    pnpm install
     ```
 
 2.  **Start Environment**
 
     ```bash
     # Starts Web, Backend, and Extension build
-    npm run dev
+    pnpm run dev
     ```
 
 3.  **Access**
@@ -127,17 +129,17 @@ Tests are organized by module:
 
 ```bash
 # Run all unit tests
-npm test
+pnpm test
 
 # Run E2E tests (Playwright)
-npm run test:e2e
+pnpm run test:e2e
 
 # Test specific packages
-npm run test:crypto      # Crypto functions
-npm run test:vault       # Vault operations
-npm run test:applogic    # App logic
-npm run test:storage     # Storage layer
-npm run test:integration # Full integration
+pnpm run test:crypto      # Crypto functions
+pnpm run test:vault       # Vault operations
+pnpm run test:applogic    # App logic
+pnpm run test:storage     # Storage layer
+pnpm run test:integration # Full integration
 ```
 
 **Test coverage:**
@@ -189,7 +191,9 @@ PwmngerTS was built to:
 - [x] Browser extension version
 - [x] Two-factor authentication
 - [x] End-to-end tests
-- [ ] Mobile app (React Native)
+- [x] Major Performance Optimization (v1.1.0)
+- [x] Vault Recovery Mechanism
+- [ ] Mobile app (React Native) - *In progress*
 - [ ] Password strength meter
 - [ ] Auto-fill integration
 - [ ] Passkey support

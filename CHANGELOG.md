@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-08
+
+### Added
+- **Major Performance Optimization**: Implemented route-based lazy loading and code splitting for faster initial page loads.
+- **Component Memoization**: Optimized the Vault Dashboard with `React.memo` and `useCallback` to prevent unnecessary re-renders.
+- **Response Compression**: Integrated Gzip/Brotli compression in the backend API to reduce data transfer overhead.
+- **Visual Refinements**: Redesigned the Landing Page with modern 2026 aesthetics, improved contrast, and smooth transitions.
+- **Loading State**: Added a dedicated "Shielding..." animation during app state transitions and asset loading.
+
+### Fixed
+- Resolved visibility issues on the landing page for certain viewport sizes.
+- Fixed TypeScript inference errors in memoized functional components.
+- Improved build stability with manual chunking for vendor libraries.
+
+## [1.0.0] - 2026-02-07
+
+### Added
+- **Vault Recovery**: Implemented Master Password recovery using the Emergency Recovery Kit.
+- **Complete Monorepo Structure**: Finalized the extraction of business logic, crypto, and storage into shared packages.
+- **Production-Ready Web Vault**: Polished the main application with a focus on UX and security.
+
 ## [0.2.0] - 2026-02-07
 
 ### Added
