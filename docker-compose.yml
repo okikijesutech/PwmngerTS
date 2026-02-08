@@ -32,5 +32,14 @@ services:
     depends_on:
       - backend
 
+  # Security Sandbox: Auditing Service
+  # Allows you to monitor all database traffic and API events in real-time
+  audit-logs:
+    image: alpine
+    depends_on:
+      - postgres
+      - backend
+    command: ["tail", "-f", "/dev/null"] # Placeholder for custom log streaming scripts
+
 volumes:
   postgres_data:
