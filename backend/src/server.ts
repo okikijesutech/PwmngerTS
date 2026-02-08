@@ -1,12 +1,14 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import compression from "compression";
 import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/auth";
 import vaultRoutes from "./routes/vault";
 
 const app: express.Application = express();
 
+app.use(compression());
 app.use(helmet());
 
 const limiter = rateLimit({

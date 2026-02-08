@@ -1,6 +1,6 @@
 {
   "name": "@pwmnger/app-logic",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Business logic and vault management for PwmngerTS",
   "main": "src/index.ts",
   "types": "src/index.ts",

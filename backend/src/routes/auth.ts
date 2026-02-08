@@ -10,7 +10,7 @@ const router: Router = Router();
 
 const authLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // 10 attempts per hour
+  max: process.env.NODE_ENV === "production" ? 10 : 1000, // Relax in dev
   message: { error: "Too many login attempts, please try again later." },
 });
 

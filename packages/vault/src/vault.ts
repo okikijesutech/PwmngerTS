@@ -5,6 +5,8 @@ export function createEmptyVault(): Vault {
     version: 1,
     entries: [],
     folders: [],
+    deletedEntryIds: [],
+    deletedFolderIds: [],
     updatedAt: Date.now(),
   };
 }

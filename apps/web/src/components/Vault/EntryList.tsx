@@ -1,18 +1,7 @@
-import React from "react";
+import React, { memo } from "react";
 import { Button } from "@pwmnger/ui";
 
-interface Entry {
-  id: string;
-  site: string;
-  username: string;
-  password: string;
-  folderId?: string;
-}
-
-interface Folder {
-  id: string;
-  name: string;
-}
+import type { VaultEntry as Entry, Folder } from "@pwmnger/vault";
 
 interface EntryListProps {
   entries: Entry[];
@@ -24,20 +13,22 @@ interface EntryListProps {
   searchQuery: string;
 }
 
-export const EntryList: React.FC<EntryListProps> = ({
+export const EntryList = memo(({
   entries,
   folders,
   onCopy,
   onDelete,
   onMove,
   onEdit,
-}) => {
+}: EntryListProps) => {
   const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [confirmingDeleteId, setConfirmingDeleteId] = React.useState<string | null>(null);
   const [editSite, setEditSite] = React.useState("");
   const [editUser, setEditUser] = React.useState("");
   const [editPass, setEditPass] = React.useState("");
 
   const startEdit = (e: Entry) => {
+    setConfirmingDeleteId(null);
     setEditingId(e.id);
     setEditSite(e.site);
     setEditUser(e.username);
@@ -214,12 +205,33 @@ export const EntryList: React.FC<EntryListProps> = ({
                       >
                         Edit
                       </span>
-                      <span 
-                        onClick={() => onDelete(e.id)}
-                        style={{ fontSize: "11px", color: "#ff4d4f", cursor: "pointer", marginLeft: 4 }}
-                      >
-                        Delete
-                      </span>
+                      {confirmingDeleteId === e.id ? (
+                        <div style={{ display: "flex", gap: 6, alignItems: "center", background: "rgba(255, 77, 79, 0.1)", padding: "2px 8px", borderRadius: "12px", marginLeft: 8 }}>
+                          <span style={{ fontSize: "10px", color: "#ff4d4f", fontWeight: 700 }}>Confirm?</span>
+                          <span 
+                            onClick={() => {
+                              onDelete(e.id);
+                              setConfirmingDeleteId(null);
+                            }}
+                            style={{ fontSize: "10px", color: "#ff4d4f", borderBottom: "1px solid #ff4d4f", cursor: "pointer" }}
+                          >
+                            Delete
+                          </span>
+                          <span 
+                            onClick={() => setConfirmingDeleteId(null)}
+                            style={{ fontSize: "10px", color: "var(--text-secondary)", cursor: "pointer" }}
+                          >
+                            No
+                          </span>
+                        </div>
+                      ) : (
+                        <span 
+                          onClick={() => setConfirmingDeleteId(e.id)}
+                          style={{ fontSize: "11px", color: "#ff4d4f", cursor: "pointer", marginLeft: 8 }}
+                        >
+                          Delete
+                        </span>
+                      )}
                    </>
                  )}
               </div>
@@ -254,4 +266,4 @@ export const EntryList: React.FC<EntryListProps> = ({
       )}
     </div>
   );
-};
+});

@@ -36,10 +36,33 @@
     </div>
 
     <div id="locked" class="glass-card" hidden>
-      <h2>PwmngerTS</h2>
+      <h2>Unlock Vault</h2>
       <p>Enter your master password to unlock.</p>
       <input type="password" id="masterPassword" placeholder="Master password" autofocus />
       <button id="unlockBtn">Unlock Vault</button>
+      <p style="font-size: 12px; margin-top: 12px; text-align: center;">
+        <a href="#" id="showRecoverLink" style="color: var(--primary); opacity: 0.8;">Forgot password? Use Recovery Kit</a>
+      </p>
+    </div>
+
+    <div id="recover-view" class="glass-card" hidden>
+      <h2>Recover Vault</h2>
+      <p style="font-size: 13px; opacity: 0.8; margin-bottom: 20px;">
+        Upload your <code>recovery_kit.json</code> to regain access to your vault data.
+      </p>
+      <input type="file" id="recoveryFileInput" accept=".json" style="margin-bottom: 20px;" />
+      <div class="button-group">
+        <button id="closeRecoverBtn" style="background: #8c8c8c">Go Back</button>
+      </div>
+    </div>
+
+    <div id="capture-prompt" class="glass-card" style="margin-bottom: 12px; border: 2px solid var(--primary);" hidden>
+      <h3 style="margin-top: 0; font-size: 14px;">Save detected password?</h3>
+      <p style="margin-bottom: 12px; font-size: 12px;">We found a login for <strong id="captureSite"></strong>.</p>
+      <div class="button-group">
+        <button id="confirmCaptureBtn" style="padding: 8px;">Save</button>
+        <button id="ignoreCaptureBtn" style="background: #8c8c8c; padding: 8px;">Ignore</button>
+      </div>
     </div>
 
     <div id="vault" hidden>
@@ -47,9 +70,29 @@
         <div class="vault-header">
           <input type="text" id="searchInput" placeholder="Search entries..." />
           <button id="syncBtn" title="Sync with Cloud" style="width: auto; padding: 0 8px; margin: 0; font-size: 16px;">🔄</button>
+          <button id="settingsBtn" title="Settings" style="width: auto; padding: 0 8px; margin: 0; font-size: 16px;">⚙️</button>
           <button id="showAddEntryBtn" class="fab">+</button>
         </div>
         <ul id="entries"></ul>
+      </div>
+    </div>
+
+    <div id="settings-view" class="glass-card" hidden>
+      <h2>Settings</h2>
+      <div style="margin-bottom: 20px;">
+        <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 8px;">Auto-lock Timeout (minutes)</label>
+        <select id="lockTimeoutSelect" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+          <option value="1">1 minute</option>
+          <option value="5">5 minutes</option>
+          <option value="15">15 minutes</option>
+          <option value="30">30 minutes</option>
+          <option value="0">Never (session only)</option>
+        </select>
+      </div>
+      <div class="button-group">
+        <button id="saveSettingsBtn">Save Settings</button>
+        <button id="downloadKitBtn" style="background: var(--primary); color: white;">📦 Download Recovery Kit</button>
+        <button id="closeSettingsBtn" style="background: #8c8c8c">Close</button>
       </div>
     </div>
 
@@ -64,6 +107,22 @@
       <div class="button-group">
         <button id="saveEntryBtn">Save</button>
         <button id="cancelAddBtn" style="background: #8c8c8c">Cancel</button>
+      </div>
+    </div>
+
+    <div id="edit-entry-form" class="glass-card" hidden>
+      <h2>Edit Entry</h2>
+      <input type="hidden" id="editEntryId" />
+      <input type="text" id="editSiteInput" placeholder="Site (e.g. google.com)" />
+      <input type="text" id="editUsernameInput" placeholder="Username" />
+      <input type="password" id="editPasswordInput" placeholder="Password" />
+      <select id="editFolderSelect" style="width: 100%; margin-bottom: 12px; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+        <option value="">No Folder</option>
+      </select>
+      <div class="button-group">
+        <button id="updateEntryBtn">Update</button>
+        <button id="deleteEntryBtn" style="background: #ff4d4f">Delete</button>
+        <button id="cancelEditBtn" style="background: #8c8c8c">Cancel</button>
       </div>
     </div>
 

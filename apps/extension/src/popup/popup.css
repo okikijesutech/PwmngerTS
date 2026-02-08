@@ -127,8 +127,34 @@ li:hover {
   transform: translateX(4px);
 }
 
-li .site { font-weight: 600; font-size: 14px; }
+li .site { font-weight: 600; font-size: 14px; flex: 1; }
 li .user { font-size: 12px; color: var(--text-secondary); }
+
+.entry-actions {
+  display: none;
+  gap: 8px;
+  align-items: center;
+}
+
+li:hover .entry-actions {
+  display: flex;
+}
+
+.action-btn {
+  padding: 4px 8px;
+  font-size: 14px;
+  background: none;
+  color: var(--text-secondary);
+  border: none;
+  margin: 0;
+  width: auto;
+}
+
+.action-btn:hover {
+  color: var(--primary);
+  transform: none;
+  background: none;
+}
 
 .fab {
   position: fixed;

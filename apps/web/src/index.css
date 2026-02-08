@@ -21,9 +21,20 @@
 
 html, body {
   margin: 0;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.loader {
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.98); }
 }
 
 /* Glassmorphism Utility */

@@ -2,350 +2,197 @@
 (window as any).PW_API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-import { useState, useEffect } from "react";
-import {
-  createNewVault,
-  unlockVault,
-  getVault,
-  lockVault,
-  isUnlocked,
-  syncVaultWithCloud,
-  checkVaultExists,
-  registerAccount,
-  loginAccount,
-  addVaultEntry,
-  deleteVaultEntry,
-  updateVaultEntry,
-} from "@pwmnger/app-logic";
-import type { Vault } from "@pwmnger/vault";
+import { useState, useEffect, lazy, Suspense } from "react";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { Toast } from "@pwmnger/ui";
-import { UnlockVault } from "./components/Vault/UnlockVault";
-import { RegisterVault } from "./components/Vault/RegisterVault";
-import { LoginForm } from "./components/Vault/LoginForm";
-import { VaultDashboard } from "./components/Vault/VaultDashboard";
+import { checkVaultExists, isUnlocked } from "@pwmnger/app-logic";
 
-type ViewState = "LOADING" | "LOGIN" | "REGISTER" | "UNLOCK" | "DASHBOARD";
+import { useAuth } from "./hooks/useAuth";
+import { useVault } from "./hooks/useVault";
+
+const UnlockVault = lazy(() => import("./components/Vault/UnlockVault").then(m => ({ default: m.UnlockVault })));
+const RegisterVault = lazy(() => import("./components/Vault/RegisterVault").then(m => ({ default: m.RegisterVault })));
+const LoginForm = lazy(() => import("./components/Vault/LoginForm").then(m => ({ default: m.LoginForm })));
+const VaultDashboard = lazy(() => import("./components/Vault/VaultDashboard").then(m => ({ default: m.VaultDashboard })));
+const LandingPage = lazy(() => import("./components/Landing/LandingPage").then(m => ({ default: m.LandingPage })));
+
+const LoadingSpinner = () => (
+  <div style={{ 
+    display: "flex", 
+    justifyContent: "center", 
+    alignItems: "center", 
+    height: "100vh", 
+    background: "#030816", 
+    color: "#fff" 
+  }}>
+    <div className="loader">Shielding...</div>
+  </div>
+);
 
 export default function App() {
-  const [refresh, setRefresh] = useState(0);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [isAuthAction, setIsAuthAction] = useState(false);
-  const [vaultExists, setVaultExists] = useState(false);
-  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
-  const [error, setError] = useState("");
-  const [toast, setToast] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
-  const [session, setSession] = useState<{ email: string } | null>(null);
-  const [vault, setVault] = useState<Vault | null>(null);
-  const [view, setView] = useState<ViewState>("LOADING");
-
-  const updateVaultState = () => {
-    if (isUnlocked()) {
-      const v = getVault();
-      setVault({ ...v, entries: [...v.entries], folders: [...(v.folders || [])] });
-    } else {
-      setVault(null);
-    }
-  };
-
-  async function update2FAStatus() {
-    const token = localStorage.getItem("pwmnger_token");
-    if (token) {
-      import("@pwmnger/app-logic").then(async ({ getAccountStatus }) => {
-        try {
-          const status = await getAccountStatus(token);
-          setIs2FAEnabled(status.is2FAEnabled);
-        } catch (e) {
-          console.error("Failed to fetch 2FA status", e);
-        }
-      });
-    }
-  }
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { session, isAuthAction, error: authError, is2FAEnabled, login, register, logout, update2FAStatus, setError: setAuthError } = useAuth();
+  const { vault, isSyncing, isUnlocking, error: vaultError, unlock, unlockWithRecovery, lock, sync, addEntry, deleteEntry, updateEntry, importData, createFolder, deleteFolder, moveEntry, downloadRecoveryKit, setError: setVaultError } = useVault();
+  
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   useEffect(() => {
     async function init() {
       const exists = await checkVaultExists();
-      setVaultExists(exists);
-      if (isUnlocked()) {
-        updateVaultState();
-        update2FAStatus();
-        setView("DASHBOARD");
+      const unlocked = isUnlocked();
+
+      if (unlocked) {
+        if (location.pathname === "/" || location.pathname === "/login" || location.pathname === "/unlock") {
+          navigate("/dashboard", { replace: true });
+        }
       } else if (exists) {
-        setView("UNLOCK");
+        if (location.pathname === "/" || location.pathname === "/login") {
+           navigate("/unlock", { replace: true });
+        }
       } else {
-        setView("LOGIN");
+        if (location.pathname !== "/" && location.pathname !== "/register" && location.pathname !== "/login") {
+          navigate("/", { replace: true });
+        }
       }
+      setLoading(false);
     }
     init();
-  }, [refresh]);
+  }, [navigate]);
 
-  const token = localStorage.getItem("pwmnger_token");
-
-  async function handleUnlock(password: string) {
+  const handleLogin = async (e: string, p: string, t?: string) => {
     try {
-      await unlockVault(password);
-      setError("");
-      updateVaultState();
-      update2FAStatus();
-      setView("DASHBOARD");
-      setRefresh((prev) => prev + 1);
-      setToast({ message: "Vault unlocked!", type: "success" });
-    } catch (err: any) {
-      setError(err.message || "Incorrect Master Password");
-    }
-  }
-
-  async function handleLogin(
-    email: string,
-    password: string,
-    twoFactorToken?: string,
-  ) {
-    setIsAuthAction(true);
-    setError("");
-    try {
-      const jwt = await loginAccount(email, password, twoFactorToken);
-      localStorage.setItem("pwmnger_token", jwt);
-      setSession({ email });
-      await syncVaultWithCloud(jwt);
-      await unlockVault(password);
-      updateVaultState();
-      update2FAStatus();
-      setView("DASHBOARD");
-      setRefresh((prev) => prev + 1);
+      await login(e, p, t);
+      await sync(localStorage.getItem("pwmnger_token")!);
+      await unlock(p);
       setToast({ message: "Welcome back!", type: "success" });
+      navigate("/dashboard");
     } catch (err: any) {
-      console.error("Login Error:", err);
-      setError(err.message || "Login failed");
-      if (err.requires2FA) throw err;
-    } finally {
-      setIsAuthAction(false);
+      if (!err.requires2FA) setAuthError(err.message);
+      throw err;
     }
-  }
-
-  async function handleRegister(email: string, password: string) {
-    setIsAuthAction(true);
-    setError("");
-    try {
-      await registerAccount(email, password);
-      await createNewVault(password);
-      const jwt = await loginAccount(email, password);
-      localStorage.setItem("pwmnger_token", jwt);
-      await unlockVault(password);
-      setSession({ email });
-      updateVaultState();
-      update2FAStatus();
-      setRefresh((prev) => prev + 1);
-      setView("DASHBOARD");
-      setToast({
-        message: "Account created and vault secured!",
-        type: "success",
-      });
-    } catch (err: any) {
-      console.error("Registration Error:", err);
-      setError(err.message || "Failed to create account");
-    } finally {
-      setIsAuthAction(false);
-    }
-  }
-
-  async function handleAddEntry(
-    site: string,
-    username: string,
-    password: string,
-    folderId?: string | null,
-  ) {
-    try {
-      await addVaultEntry({
-        site,
-        username,
-        password,
-        ...(folderId ? { folderId: folderId } : {}),
-      });
-      updateVaultState();
-      setToast({ message: "Entry added successfully", type: "success" });
-    } catch (err) {
-      console.error("Add Entry Error:", err);
-      setToast({ message: "Failed to save entry to storage", type: "error" });
-    }
-  }
-
-  async function handleImportVault(jsonString: string) {
-    try {
-      const { importVaultData } = await import("@pwmnger/app-logic");
-      await importVaultData(jsonString);
-      updateVaultState();
-      setToast({ message: "Vault imported successfully!", type: "success" });
-    } catch (err: any) {
-      setToast({ message: "Import failed: " + err.message, type: "error" });
-    }
-  }
-
-  async function handleCreateFolder(name: string) {
-    try {
-      const { createFolder } = await import("@pwmnger/app-logic");
-      await createFolder(name);
-      updateVaultState();
-      setToast({ message: "Folder created", type: "success" });
-    } catch (e: any) {
-      setToast({ message: "Failed to create folder", type: "error" });
-    }
-  }
-
-  async function handleDeleteFolder(id: string) {
-    try {
-      const { deleteFolder } = await import("@pwmnger/app-logic");
-      await deleteFolder(id);
-      updateVaultState();
-      setToast({ message: "Folder deleted", type: "success" });
-    } catch (e) {
-      setToast({ message: "Failed to delete folder", type: "error" });
-    }
-  }
-
-  async function handleMoveEntry(entryId: string, folderId: string | null) {
-    try {
-      const { moveEntryToFolder } = await import("@pwmnger/app-logic");
-      await moveEntryToFolder(entryId, folderId);
-      updateVaultState();
-    } catch (e) {
-      setToast({ message: "Failed to move entry", type: "error" });
-    }
-  }
-
-  async function handleDeleteEntry(id: string) {
-    try {
-      await deleteVaultEntry(id);
-      updateVaultState();
-      setToast({ message: "Entry deleted", type: "success" });
-    } catch (err) {
-      console.error("Delete Entry Error:", err);
-      setToast({
-        message: "Failed to delete entry from storage",
-        type: "error",
-      });
-    }
-  }
-
-  async function handleEditEntry(id: string, site: string, user: string, pass: string) {
-    try {
-      await updateVaultEntry(id, { site, username: user, password: pass });
-      updateVaultState();
-      setToast({ message: "Entry updated", type: "success" });
-    } catch (err) {
-      console.error("Edit Entry Error:", err);
-      setToast({ message: "Failed to update entry", type: "error" });
-    }
-  }
-
-  async function handleSync() {
-    if (!token) {
-      setToast({ message: "Please login to sync", type: "error" });
-      return;
-    }
-    setIsSyncing(true);
-    try {
-      await syncVaultWithCloud(token);
-      updateVaultState();
-      setToast({ message: "Vault synced with cloud!", type: "success" });
-    } catch (err: any) {
-      console.error(err);
-      setToast({ message: err.message || "Sync failed", type: "error" });
-    } finally {
-      setIsSyncing(false);
-    }
-  }
-
-  const handleLock = () => {
-    lockVault();
-    updateVaultState();
-    setRefresh((prev) => prev + 1);
   };
 
+  const handleRegister = async (e: string, p: string) => {
+    try {
+      await register(e, p);
+      await useVault().create(p); // Temp use of create
+      await login(e, p);
+      setToast({ message: "Account created!", type: "success" });
+      navigate("/dashboard");
+    } catch (err: any) {
+      setAuthError(err.message);
+    }
+  };
+
+  const handleUnlock = async (p: string) => {
+    try {
+      await unlock(p);
+      setToast({ message: "Vault unlocked!", type: "success" });
+      navigate("/dashboard");
+    } catch (err: any) {
+      setVaultError(err.message);
+    }
+  };
+
+  const handleRecover = async (key: string, data: any) => {
+    try {
+      await unlockWithRecovery(key, data);
+      setToast({ message: "Vault recovered!", type: "success" });
+      navigate("/dashboard");
+    } catch (err: any) {
+      setVaultError(err.message);
+    }
+  };
+
+  if (loading) return <LoadingSpinner />;
+
   return (
-    <div>
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
+    <div className="app-main">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
-      <div>
-        {view === "LOADING" && (
-          <p style={{ textAlign: "center", padding: 40 }}>Loading...</p>
-        )}
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
+          <Route path="/" element={
+            <LandingPage onLogin={() => navigate("/login")} onRegister={() => navigate("/register")} />
+          } />
+          
+          <Route path="/login" element={
+            <div style={{ maxWidth: 450, margin: "100px auto" }}>
+              <LoginForm 
+                onLogin={handleLogin} 
+                onGoToRegister={() => navigate("/register")} 
+                error={authError} 
+                loading={isAuthAction} 
+              />
+            </div>
+          } />
 
-        {view === "LOGIN" && (
-          <div style={{ maxWidth: 450, margin: "100px auto" }}>
-            <LoginForm
-              onLogin={handleLogin}
-              onGoToRegister={() => setView("REGISTER")}
-              error={error}
-              loading={isAuthAction}
-            />
+          <Route path="/register" element={
+            <div style={{ maxWidth: 450, margin: "100px auto" }}>
+              <RegisterVault 
+                onRegister={handleRegister} 
+                onGoToLogin={() => navigate("/login")} 
+                error={authError} 
+                loading={isAuthAction} 
+              />
+            </div>
+          } />
+
+          <Route path="/unlock" element={
+            <div style={{ maxWidth: 450, margin: "100px auto" }}>
+              <UnlockVault 
+                onUnlock={handleUnlock} 
+                onRecover={handleRecover} 
+                error={vaultError} 
+                loading={isUnlocking} 
+              />
+              <p style={{ textAlign: "center", marginTop: 20 }}>
+                <span onClick={() => { localStorage.clear(); navigate("/login"); }} style={{ cursor: "pointer", color: "#666", fontSize: 13 }}>
+                  Switch Account / Reset
+                </span>
+              </p>
+            </div>
+          } />
+
+          <Route path="/dashboard" element={
+            vault ? (
+              <VaultDashboard
+                vault={vault}
+                userEmail={session?.email || ""}
+                onSync={() => sync(localStorage.getItem("pwmnger_token")!)}
+                onLock={() => { lock(); navigate("/unlock"); }}
+                onAddEntry={addEntry}
+                onDeleteEntry={deleteEntry}
+                onCreateFolder={createFolder}
+                onDeleteFolder={deleteFolder}
+                onMoveEntry={moveEntry}
+                onEditEntry={updateEntry}
+                onImportVault={importData}
+                onDownloadRecoveryKit={downloadRecoveryKit}
+                onRefreshAccountStatus={update2FAStatus}
+                isSyncing={isSyncing}
+                is2FAEnabled={is2FAEnabled}
+              />
+            ) : <Navigate to="/unlock" />
+          } />
+        </Routes>
+      </Suspense>
+
+      {location.pathname !== "/dashboard" && (
+        <footer className="footer-main">
+          <div className="footer-logo">
+            <span className="logo-icon">🛡️</span> Pwmnger<span>TS</span>
           </div>
-        )}
-
-        {view === "REGISTER" && (
-          <div style={{ maxWidth: 450, margin: "100px auto" }}>
-            <RegisterVault
-              onRegister={handleRegister}
-              onGoToLogin={() => setView("LOGIN")}
-              error={error}
-              loading={isAuthAction}
-            />
+          <p className="footer-copy">
+            &copy; 2026 okikijesutech &bull; Secure Zero-Knowledge Storage Global.
+          </p>
+          <div style={{ display: "flex", gap: 20, opacity: 0.6, fontSize: 12 }}>
+             <a href="#" style={{ color: "white", textDecoration: "none" }}>Privacy Policy</a>
+             <a href="#" style={{ color: "white", textDecoration: "none" }}>Terms of Service</a>
+             <a href="https://github.com/okikijesutech/PwmngerTS" target="_blank" style={{ color: "white", textDecoration: "none" }}>Open Source</a>
           </div>
-        )}
-
-        {view === "UNLOCK" && (
-          <div style={{ maxWidth: 450, margin: "100px auto" }}>
-            <UnlockVault onUnlock={handleUnlock} error={error} />
-            <p style={{ textAlign: "center", marginTop: 20 }}>
-              <span
-                onClick={() => {
-                  localStorage.clear();
-                  setView("LOGIN");
-                }}
-                style={{ cursor: "pointer", color: "#666", fontSize: 13 }}
-              >
-                Switch Account / Reset
-              </span>
-            </p>
-          </div>
-        )}
-
-        {view === "DASHBOARD" && vault && (
-          <VaultDashboard
-            vault={vault as Vault}
-            onSync={handleSync}
-            onLock={handleLock}
-            onAddEntry={handleAddEntry}
-            onDeleteEntry={handleDeleteEntry}
-            onCreateFolder={handleCreateFolder}
-            onDeleteFolder={handleDeleteFolder}
-            onMoveEntry={handleMoveEntry}
-            onEditEntry={handleEditEntry}
-            onImportVault={handleImportVault}
-            onRefreshAccountStatus={update2FAStatus}
-            isSyncing={isSyncing}
-            is2FAEnabled={is2FAEnabled}
-          />
-        )}
-      </div>
-
-      {(view !== "DASHBOARD") && (
-        <footer
-          style={{
-            marginTop: 40,
-            textAlign: "center",
-            color: "#777",
-            fontSize: 13,
-          }}
-        >
-          &copy; 2026 PwmngerTS &bull; Secure Zero-Knowledge Storage
         </footer>
       )}
     </div>

@@ -1,15 +1,25 @@
-import { loadVault, saveVault } from "../storage/vaultStorage";
 import {
-  decryptVault,
-  createEncryptedVault,
-  encryptVault,
-} from "../crypto/cryptoBridge";
-import { passwordStrength } from "../password/strength";
+  loadVault,
+  saveVault,
+  saveAuthToken,
+  loadAuthToken,
+} from "@pwmnger/storage";
 import {
   loginAccount,
   registerAccount,
   syncVaultWithCloud,
+  unlockVault,
+  getVault,
+  addVaultEntry,
+  deleteVaultEntry,
+  updateVaultEntry,
+  isUnlocked,
+  createNewVault,
+  startAutoLock,
+  exportRecoveryData,
+  unlockVaultWithRecoveryKey,
 } from "@pwmnger/app-logic";
+import { passwordStrength } from "../password/strength";
 
 if (typeof document !== "undefined") {
   document.addEventListener("DOMContentLoaded", async () => {
@@ -67,9 +77,6 @@ if (typeof document !== "undefined") {
       "passwordInput",
     ) as HTMLInputElement | null;
 
-    let currentEntries: any[] = [];
-    let currentMaster: string = "";
-    let currentSalt: Uint8Array | null = null;
 
     const login2FASection = document.getElementById("login2FASection");
     const login2FATokenInput = document.getElementById(
@@ -79,6 +86,30 @@ if (typeof document !== "undefined") {
     const folderSelect = document.getElementById(
       "folderSelect",
     ) as HTMLSelectElement | null;
+
+    const editEntryForm = document.getElementById("edit-entry-form");
+    const editEntryIdInput = document.getElementById("editEntryId") as HTMLInputElement | null;
+    const editSiteInput = document.getElementById("editSiteInput") as HTMLInputElement | null;
+    const editUsernameInput = document.getElementById("editUsernameInput") as HTMLInputElement | null;
+    const editPasswordInput = document.getElementById("editPasswordInput") as HTMLInputElement | null;
+    const editFolderSelect = document.getElementById("editFolderSelect") as HTMLSelectElement | null;
+    const updateEntryBtn = document.getElementById("updateEntryBtn");
+    const deleteEntryBtn = document.getElementById("deleteEntryBtn");
+    const cancelEditBtn = document.getElementById("cancelEditBtn");
+    const capturePrompt = document.getElementById("capture-prompt");
+    const captureSiteSpan = document.getElementById("captureSite");
+    const confirmCaptureBtn = document.getElementById("confirmCaptureBtn");
+    const ignoreCaptureBtn = document.getElementById("ignoreCaptureBtn");
+    const showRecoverLink = document.getElementById("showRecoverLink");
+    const recoverView = document.getElementById("recover-view");
+    const recoveryFileInput = document.getElementById("recoveryFileInput") as HTMLInputElement | null;
+    const closeRecoverBtn = document.getElementById("closeRecoverBtn");
+    const settingsBtn = document.getElementById("settingsBtn");
+    const settingsView = document.getElementById("settings-view");
+    const lockTimeoutSelect = document.getElementById("lockTimeoutSelect") as HTMLSelectElement | null;
+    const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+    const downloadKitBtn = document.getElementById("downloadKitBtn");
+    const closeSettingsBtn = document.getElementById("closeSettingsBtn");
 
     if (
       !unlockBtn ||
@@ -102,11 +133,113 @@ if (typeof document !== "undefined") {
       !loginPasswordInput ||
       !loginBtn ||
       !syncBtn ||
-      !folderSelect
+      !folderSelect ||
+      !editEntryForm ||
+      !editEntryIdInput ||
+      !editSiteInput ||
+      !editUsernameInput ||
+      !editPasswordInput ||
+      !editFolderSelect ||
+      !updateEntryBtn ||
+      !deleteEntryBtn ||
+      !cancelEditBtn ||
+      !capturePrompt ||
+      !captureSiteSpan ||
+      !confirmCaptureBtn ||
+      !ignoreCaptureBtn ||
+      !settingsBtn ||
+      !settingsView ||
+      !lockTimeoutSelect ||
+      !saveSettingsBtn ||
+      !downloadKitBtn ||
+      !closeSettingsBtn ||
+      !showRecoverLink ||
+      !recoverView ||
+      !recoveryFileInput ||
+      !closeRecoverBtn
     ) {
       console.error("Required DOM elements not found");
       return;
     }
+
+    // Capture logic
+    chrome.runtime.sendMessage({ action: "get-pending-entry" }, (pending: any) => {
+      if (pending && isUnlocked()) {
+        captureSiteSpan.innerText = pending.site;
+        capturePrompt.hidden = false;
+
+        confirmCaptureBtn.onclick = async () => {
+          try {
+            await addVaultEntry({
+              site: pending.site,
+              username: pending.username,
+              password: pending.password,
+            } as any);
+            const token = await loadAuthToken();
+            if (token) await syncVaultWithCloud(token);
+            updateView();
+            capturePrompt.hidden = true;
+          } catch (e) {
+            alert("Failed to save captured password");
+          }
+        };
+
+        ignoreCaptureBtn.onclick = () => {
+          capturePrompt.hidden = true;
+        };
+      }
+    });
+
+    // Settings logic
+    settingsBtn.onclick = async () => {
+      vaultDiv.hidden = true;
+      settingsView.hidden = false;
+      const { autoLockTimeout } = await chrome.storage.local.get("autoLockTimeout");
+      if (autoLockTimeout) lockTimeoutSelect.value = autoLockTimeout.toString();
+    };
+
+    closeSettingsBtn.onclick = () => {
+      settingsView.hidden = true;
+      vaultDiv.hidden = false;
+    };
+
+    saveSettingsBtn.onclick = async () => {
+      const timeoutMinutes = parseInt(lockTimeoutSelect.value);
+      await chrome.storage.local.set({ autoLockTimeout: timeoutMinutes });
+      
+      if (timeoutMinutes > 0) {
+        startAutoLock(timeoutMinutes * 60 * 1000);
+      }
+      
+      settingsView.hidden = true;
+      vaultDiv.hidden = false;
+      alert("Settings saved");
+    };
+
+    downloadKitBtn.onclick = async () => {
+      try {
+        const kit = await exportRecoveryData();
+        const blob = new Blob([JSON.stringify(kit, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "pwmnger_recovery_kit.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert("Recovery kit downloaded! Keep it safe.");
+      } catch (e: any) {
+        alert("Failed to generate kit: " + e.message);
+      }
+    };
+
+    const initAutoLock = async () => {
+      const { autoLockTimeout } = await chrome.storage.local.get("autoLockTimeout");
+      if (autoLockTimeout && autoLockTimeout > 0) {
+        startAutoLock(autoLockTimeout * 60 * 1000);
+      }
+    };
 
     // Password strength colors
     const getStrengthInfo = (password: string) => {
@@ -188,22 +321,17 @@ if (typeof document !== "undefined") {
         createVaultBtn.innerText = "Creating...";
 
         await registerAccount(email, password); // Zero-Knowledge Reg
-
-        const newVault = await createEncryptedVault(password);
-        await saveVault(newVault);
+        await createNewVault(password);
 
         // Auto-login to get token
         const token = await loginAccount(email, password);
+        await saveAuthToken(token);
+        
+        // Unlock locally in appLogic before sync
+        await unlockVault(password);
         await syncVaultWithCloud(token);
 
-        // Auto-unlock
-        const vaultData = await decryptVault(newVault, password);
-        currentEntries = vaultData.entries || [];
-        currentFolders = vaultData.folders || [];
-        currentMaster = password;
-        currentSalt = new Uint8Array(newVault.salt);
-
-        renderEntries(currentEntries, entriesUl);
+        updateView();
         registerDiv.hidden = true;
         vaultDiv.hidden = false;
       } catch (e: any) {
@@ -218,35 +346,27 @@ if (typeof document !== "undefined") {
     loginBtn?.addEventListener("click", async () => {
       const email = loginEmailInput.value;
       const password = loginPasswordInput.value;
-      const token = login2FATokenInput?.value;
+      const token2fa = login2FATokenInput?.value;
 
       if (!email || !password) return alert("Required");
 
       try {
         loginBtn.innerText = "Syncing...";
-        const authToken = await loginAccount(email, password, token);
+        const authToken = await loginAccount(email, password, token2fa);
+        await saveAuthToken(authToken);
 
         // If login successful, hide 2FA just in case
         login2FASection?.setAttribute("hidden", "");
 
-        // Sync (First download)
+        // Sync (Pull latest blob from cloud and save to local storage)
         await syncVaultWithCloud(authToken);
 
-        // Now try to unlock locally
-        const encryptedVault = await loadVault();
-        if (encryptedVault) {
-          const vaultData = await decryptVault(encryptedVault, password);
-          currentEntries = vaultData.entries || [];
-          currentFolders = vaultData.folders || [];
-          currentMaster = password;
-          currentSalt = new Uint8Array(encryptedVault.salt);
+        // Now unlock locally in appLogic library to synchronize state
+        await unlockVault(password);
 
-          renderEntries(currentEntries, entriesUl);
-          loginDiv.hidden = true;
-          vaultDiv.hidden = false;
-        } else {
-          alert("No vault found on cloud or local");
-        }
+        updateView();
+        loginDiv.hidden = true;
+        vaultDiv.hidden = false;
       } catch (e: any) {
         if (e.requires2FA) {
           login2FASection?.removeAttribute("hidden");
@@ -264,21 +384,13 @@ if (typeof document !== "undefined") {
       try {
         syncBtn.innerText = "⏳";
         syncBtn.style.pointerEvents = "none";
-        // We need the token. For simplicity, we assume user is logged in if they can sync.
-        // loginAccount doesn't store token globally in library yet?
-        // In web app it's in localStorage.
-        const token = localStorage.getItem("pwmnger_token");
+        
+        const token = await loadAuthToken();
         if (!token) throw new Error("Please log in again to sync.");
 
         await syncVaultWithCloud(token);
-        const updatedVault = await loadVault();
-        if (updatedVault) {
-          const vaultData = await decryptVault(updatedVault, currentMaster);
-          currentEntries = vaultData.entries || [];
-          currentFolders = vaultData.folders || [];
-          renderEntries(currentEntries, entriesUl);
-          alert("Sync Success!");
-        }
+        updateView();
+        alert("Sync Success!");
       } catch (e: any) {
         alert(e.message || "Sync failed");
       } finally {
@@ -287,33 +399,64 @@ if (typeof document !== "undefined") {
       }
     });
 
+    const originalUnlockText = unlockBtn.innerText;
     unlockBtn.addEventListener("click", async () => {
-      const master = masterInput.value;
-      const encryptedVault = await loadVault();
-      if (!encryptedVault) return;
-
+      const password = masterInput.value;
       try {
-        const vaultData = await decryptVault(encryptedVault, master);
-        currentEntries = vaultData.entries;
-        currentFolders = vaultData.folders || [];
-        currentMaster = master;
-        currentSalt = new Uint8Array(encryptedVault.salt);
-
-        renderEntries(currentEntries, entriesUl);
+        unlockBtn.innerText = "Unlocking...";
+        (unlockBtn as HTMLButtonElement).disabled = true;
+        
+        await unlockVault(password);
+        await initAutoLock();
+        updateView();
         lockedDiv.hidden = true;
         vaultDiv.hidden = false;
-      } catch {
-        alert("Wrong master password");
+      } catch (e: any) {
+        alert(e.message || "Wrong master password");
+      } finally {
+        unlockBtn.innerText = originalUnlockText;
+        (unlockBtn as HTMLButtonElement).disabled = false;
       }
     });
 
+    showRecoverLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      lockedDiv.hidden = true;
+      recoverView.hidden = false;
+    });
+
+    closeRecoverBtn.addEventListener("click", () => {
+      recoverView.hidden = true;
+      lockedDiv.hidden = false;
+    });
+
+    recoveryFileInput.addEventListener("change", (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const kit = JSON.parse(event.target?.result as string);
+          if (kit.recoveryKey && kit.encryptedVaultKey) {
+            await unlockVaultWithRecoveryKey(kit.recoveryKey, kit.encryptedVaultKey);
+            await initAutoLock();
+            updateView();
+            recoverView.hidden = true;
+            vaultDiv.hidden = false;
+            alert("Vault recovered and unlocked!");
+          } else {
+            alert("Invalid recovery kit format");
+          }
+        } catch (err) {
+          alert("Failed to parse recovery kit");
+        }
+      };
+      reader.readAsText(file);
+    });
+
     searchInput?.addEventListener("input", () => {
-      const filtered = currentEntries.filter(
-        (e) =>
-          e.site.toLowerCase().includes(searchInput.value.toLowerCase()) ||
-          e.username.toLowerCase().includes(searchInput.value.toLowerCase()),
-      );
-      renderEntries(filtered, entriesUl);
+      updateView();
     });
 
     showAddEntryBtn.addEventListener("click", async () => {
@@ -323,7 +466,8 @@ if (typeof document !== "undefined") {
       // Populate folders
       if (folderSelect) {
         folderSelect.innerHTML = '<option value="">No Folder</option>';
-        currentFolders.forEach((f: any) => {
+        const folders = getVault().folders || [];
+        folders.forEach((f: any) => {
           const opt = document.createElement("option");
           opt.value = f.id;
           opt.innerText = f.name;
@@ -351,76 +495,207 @@ if (typeof document !== "undefined") {
         return;
       }
 
-      currentEntries.push({
-        id: crypto.randomUUID(),
-        site: siteInput.value,
-        username: usernameInput.value,
-        password: passwordInput.value,
-        folderId: folderSelect?.value || undefined,
-        createdAt: Date.now(),
-      });
-
       try {
-        if (!currentSalt) throw new Error("Salt missing");
-        const updatedVault = await encryptVault(
-          { entries: currentEntries, folders: currentFolders },
-          currentMaster,
-          currentSalt,
-        );
-        await saveVault(updatedVault);
+        const folderId = folderSelect?.value || undefined;
+        await addVaultEntry({
+          site: siteInput.value,
+          username: usernameInput.value,
+          password: passwordInput.value,
+          ...(folderId ? { folderId } : {}),
+        } as any);
 
-        renderEntries(currentEntries, entriesUl);
+        // Auto-sync
+        const token = await loadAuthToken();
+        if (token) {
+          try {
+            await syncVaultWithCloud(token);
+          } catch (syncErr) {
+            console.warn("Auto-sync failed, but entry saved locally", syncErr);
+          }
+        }
+
+        updateView();
         addEntryForm.hidden = true;
         vaultDiv.hidden = false;
 
         siteInput.value = "";
         usernameInput.value = "";
         passwordInput.value = "";
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
-        alert("Failed to save entry");
+        alert(e.message || "Failed to save entry");
       }
     });
 
-    let currentFolders: any[] = [];
+    cancelEditBtn.addEventListener("click", () => {
+      editEntryForm.hidden = true;
+      vaultDiv.hidden = false;
+    });
 
-    async function updateVaultData() {
-      const encryptedVault = await loadVault();
-      if (encryptedVault && currentMaster) {
-        const vaultData = await decryptVault(encryptedVault, currentMaster);
-        currentEntries = vaultData.entries;
-        currentFolders = vaultData.folders || [];
+    updateEntryBtn.addEventListener("click", async () => {
+      if (!editEntryIdInput.value || !editSiteInput.value || !editUsernameInput.value || !editPasswordInput.value) {
+        alert("All fields are required");
+        return;
       }
+
+      try {
+        const folderId = editFolderSelect?.value || undefined;
+        await updateVaultEntry(editEntryIdInput.value, {
+          site: editSiteInput.value,
+          username: editUsernameInput.value,
+          password: editPasswordInput.value,
+          ...(folderId ? { folderId } : {}),
+        } as any);
+
+        // Auto-sync
+        const token = await loadAuthToken();
+        if (token) await syncVaultWithCloud(token);
+
+        updateView();
+        editEntryForm.hidden = true;
+        vaultDiv.hidden = false;
+      } catch (e: any) {
+        console.error(e);
+        alert(e.message || "Failed to update entry");
+      }
+    });
+
+    let isConfirmingDelete = false;
+    deleteEntryBtn.addEventListener("click", async () => {
+      if (!editEntryIdInput.value) return;
+      
+      if (!isConfirmingDelete) {
+        isConfirmingDelete = true;
+        deleteEntryBtn.innerText = "Confirm Delete?";
+        deleteEntryBtn.style.background = "#ff4d4f";
+        return;
+      }
+
+      try {
+        deleteEntryBtn.innerText = "Deleting...";
+        await deleteVaultEntry(editEntryIdInput.value);
+
+        // Auto-sync
+        const token = await loadAuthToken();
+        if (token) await syncVaultWithCloud(token);
+
+        updateView();
+        editEntryForm.hidden = true;
+        vaultDiv.hidden = false;
+        isConfirmingDelete = false;
+        deleteEntryBtn.innerText = "Delete Entry";
+        deleteEntryBtn.style.background = "#ff4d4f"; // Reset to original if needed or keep red
+      } catch (e: any) {
+        console.error(e);
+        alert(e.message || "Failed to delete entry");
+        isConfirmingDelete = false;
+        deleteEntryBtn.innerText = "Delete Entry";
+      }
+    });
+
+    cancelEditBtn.addEventListener("click", () => {
+      isConfirmingDelete = false;
+      deleteEntryBtn.innerText = "Delete Entry";
+      deleteEntryBtn.style.background = ""; // Reset background to default
+      editEntryForm.hidden = true;
+      vaultDiv.hidden = false;
+    });
+
+    function updateView() {
+      if (!isUnlocked()) return;
+      const vault = getVault();
+      const entries = vault.entries;
+      const folders = vault.folders || [];
+      const query = searchInput?.value.toLowerCase() || "";
+      
+      const filtered = entries.filter((e) => 
+        e.site.toLowerCase().includes(query) || 
+        e.username.toLowerCase().includes(query)
+      );
+
+      renderEntries(filtered, folders, entriesUl!);
     }
 
-    function renderEntries(entries: any[], container: HTMLElement) {
+    function renderEntries(entries: any[], folders: any[], container: HTMLElement) {
       container.innerHTML = "";
       for (const entry of entries) {
-        const folder = currentFolders.find((f) => f.id === entry.folderId);
+        const folder = folders.find((f) => f.id === entry.folderId);
         const folderLabel = folder
           ? `<span style="font-size: 10px; color: var(--primary); background: #e6f7ff; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">${folder.name}</span>`
           : "";
 
         const li = document.createElement("li");
         li.innerHTML = `
-          <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
             <div class="site">${entry.site} ${folderLabel}</div>
+            <div class="entry-actions">
+              <button class="action-btn fill-btn" title="Auto-fill Site">⚡</button>
+              <button class="action-btn edit-btn" title="Edit">✏️</button>
+              <button class="action-btn copy-btn" title="Copy Password">📋</button>
+            </div>
           </div>
           <div class="user">${entry.username}</div>
         `;
-        li.onclick = () => {
+
+        // Fill button logic
+        const fillBtn = li.querySelector(".fill-btn");
+        fillBtn?.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (tab?.id) {
+            chrome.tabs.sendMessage(tab.id, {
+              action: "autofill",
+              username: entry.username,
+              password: entry.password,
+            });
+          }
+        });
+
+        // Copy button logic
+        const copyBtn = li.querySelector(".copy-btn");
+        copyBtn?.addEventListener("click", (e) => {
+          e.stopPropagation();
           navigator.clipboard.writeText(entry.password);
-          const originalText = li.innerHTML;
-          li.innerHTML =
-            '<div style="color: var(--primary); font-weight: bold; text-align: center;">Copied!</div>';
-          setTimeout(() => (li.innerHTML = originalText), 2000);
-          setTimeout(() => navigator.clipboard.writeText(""), 30000);
-        };
+          const originalText = copyBtn.innerHTML;
+          copyBtn.innerHTML = "✅";
+          setTimeout(() => (copyBtn.innerHTML = originalText), 2000);
+        });
+
+        // Edit button logic (clicking the row or edit icon)
+        li.addEventListener("click", () => {
+          vaultDiv!.hidden = true;
+          editEntryForm!.hidden = false;
+
+          // Populate folders
+          if (editFolderSelect) {
+            editFolderSelect.innerHTML = '<option value="">No Folder</option>';
+            folders.forEach((f) => {
+              const opt = document.createElement("option");
+              opt.value = f.id;
+              opt.innerText = f.name;
+              editFolderSelect.appendChild(opt);
+            });
+            editFolderSelect.value = entry.folderId || "";
+          }
+
+          editEntryIdInput!.value = entry.id;
+          editSiteInput!.value = entry.site;
+          editUsernameInput!.value = entry.username;
+          editPasswordInput!.value = entry.password;
+        });
+
         container.appendChild(li);
       }
     }
 
     // Initial load
-    await updateVaultData();
+    const vault = await loadVault();
+    if (vault) {
+      lockedDiv.hidden = false;
+      loginDiv.hidden = true;
+    } else {
+      lockedDiv.hidden = true;
+      loginDiv.hidden = false;
+    }
   });
 }

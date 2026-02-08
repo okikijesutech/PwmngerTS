@@ -47,7 +47,21 @@ function openDB(): Promise<IDBDatabase> {
   return dbPromise;
 }
 
+// @ts-ignore - chrome is available in extension environment
+const _chrome = (globalThis as any).chrome;
+
 export async function saveVault(data: StoredVault): Promise<void> {
+  // Auto-detect Chrome Extension environment
+  if (typeof _chrome !== "undefined" && _chrome.storage && _chrome.storage.local) {
+    console.log("Storage: Using chrome.storage.local");
+    return new Promise((resolve, reject) => {
+      _chrome.storage.local.set({ pwmnger_vault: data }, () => {
+        if (_chrome.runtime.lastError) reject(_chrome.runtime.lastError);
+        else resolve();
+      });
+    });
+  }
+
   console.log("IndexedDB: Saving vault...");
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -74,6 +88,16 @@ export async function saveVault(data: StoredVault): Promise<void> {
 }
 
 export async function loadVault(): Promise<StoredVault | null> {
+  // Auto-detect Chrome Extension environment
+  if (typeof _chrome !== "undefined" && _chrome.storage && _chrome.storage.local) {
+    console.log("Storage: Loading from chrome.storage.local");
+    return new Promise((resolve) => {
+      _chrome.storage.local.get("pwmnger_vault", (result: any) => {
+        resolve(result.pwmnger_vault ?? null);
+      });
+    });
+  }
+
   console.log("IndexedDB: Loading vault...");
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -93,4 +117,39 @@ export async function loadVault(): Promise<StoredVault | null> {
       reject(request.error);
     };
   });
+}
+
+export async function saveAuthToken(token: string): Promise<void> {
+  if (typeof _chrome !== "undefined" && _chrome.storage && _chrome.storage.local) {
+    return new Promise((resolve, reject) => {
+      _chrome.storage.local.set({ pwmnger_token: token }, () => {
+        if (_chrome.runtime.lastError) reject(_chrome.runtime.lastError);
+        else resolve();
+      });
+    });
+  }
+  localStorage.setItem("pwmnger_token", token);
+}
+
+export async function loadAuthToken(): Promise<string | null> {
+  if (typeof _chrome !== "undefined" && _chrome.storage && _chrome.storage.local) {
+    return new Promise((resolve) => {
+      _chrome.storage.local.get("pwmnger_token", (result: any) => {
+        resolve(result.pwmnger_token ?? null);
+      });
+    });
+  }
+  return localStorage.getItem("pwmnger_token");
+}
+
+export async function clearAuthToken(): Promise<void> {
+  if (typeof _chrome !== "undefined" && _chrome.storage && _chrome.storage.local) {
+    return new Promise((resolve, reject) => {
+      _chrome.storage.local.remove("pwmnger_token", () => {
+        if (_chrome.runtime.lastError) reject(_chrome.runtime.lastError);
+        else resolve();
+      });
+    });
+  }
+  localStorage.removeItem("pwmnger_token");
 }

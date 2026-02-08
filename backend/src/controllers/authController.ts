@@ -16,7 +16,11 @@ export async function register(req: Request, res: Response) {
     });
 
     res.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
+    console.error("Registration Error:", err);
+    if (err.code === "P2002") {
+      return res.status(409).json({ error: "An account with this email already exists" });
+    }
     res.status(500).json({ error: "Registration failed" });
   }
 }

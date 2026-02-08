@@ -9,7 +9,7 @@ import {
 import { createEmptyVault } from "@pwmnger/vault";
 import { saveVault, loadVault } from "@pwmnger/storage";
 
-import type { Vault, VaultEntry } from "@pwmnger/vault";
+import type { Vault, VaultEntry, Folder } from "@pwmnger/vault";
 
 let unlockedVault: Vault | null = null;
 let vaultKey: CryptoKey | null = null;
@@ -60,12 +60,31 @@ export async function createNewVault(masterPassword: string) {
 
 export function mergeVaults(local: Vault, remote: Vault): Vault {
   const mergedEntriesMap = new Map<string, VaultEntry>();
+  
+  // Combine tombstones (Unique union)
+  const deletedEntryIds = Array.from(new Set([
+    ...(local.deletedEntryIds || []),
+    ...(remote.deletedEntryIds || [])
+  ]));
+  const deletedFolderIds = Array.from(new Set([
+    ...(local.deletedFolderIds || []),
+    ...(remote.deletedFolderIds || [])
+  ]));
 
-  // Add all local entries
-  local.entries.forEach((entry) => mergedEntriesMap.set(entry.id, entry));
+  const tombstoneEntries = new Set(deletedEntryIds);
+  const tombstoneFolders = new Set(deletedFolderIds);
 
-  // Merge remote entries
+  // Add all local entries (unless in tombstones)
+  local.entries.forEach((entry) => {
+    if (!tombstoneEntries.has(entry.id)) {
+      mergedEntriesMap.set(entry.id, entry);
+    }
+  });
+
+  // Merge remote entries (unless in tombstones or older)
   remote.entries.forEach((remoteEntry) => {
+    if (tombstoneEntries.has(remoteEntry.id)) return;
+    
     const existingEntry = mergedEntriesMap.get(remoteEntry.id);
     if (
       !existingEntry ||
@@ -75,16 +94,32 @@ export function mergeVaults(local: Vault, remote: Vault): Vault {
     }
   });
 
+  // Merge folders
+  const mergedFoldersMap = new Map<string, Folder>();
+  (local.folders || []).forEach(f => {
+    if (!tombstoneFolders.has(f.id)) mergedFoldersMap.set(f.id, f);
+  });
+  (remote.folders || []).forEach(f => {
+    if (!tombstoneFolders.has(f.id)) mergedFoldersMap.set(f.id, f);
+  });
+
   return {
     ...local,
     entries: Array.from(mergedEntriesMap.values()),
+    folders: Array.from(mergedFoldersMap.values()),
+    deletedEntryIds,
+    deletedFolderIds,
     updatedAt: Math.max(local.updatedAt, remote.updatedAt),
   };
 }
 
 export async function unlockVault(masterPassword: string) {
+  console.log("unlockVault: Attempting to unlock locally...");
   const stored = await loadVault();
-  if (!stored) throw new Error("No vault found");
+  if (!stored) {
+    console.warn("unlockVault: No vault found in storage");
+    throw new Error("No vault found (Not initialized)");
+  }
 
   const salt = new Uint8Array(stored.salt);
   const masterKey = await deriveMasterKey(masterPassword, salt);
@@ -93,18 +128,21 @@ export async function unlockVault(masterPassword: string) {
   try {
     vaultKey = await unwrapKey(masterKey, stored.encryptedVaultKey);
   } catch (err) {
-    console.error("Master key decryption error:", err);
-    throw new Error("Invalid master password or corrupted vault key");
+    console.error("Master key decryption error (Key mismatch):", err);
+    throw new Error(
+      "Invalid master password or incompatible vault data. Try clearing local cache if you are sure your password is correct.",
+    );
   }
 
   if (!vaultKey) throw new Error("Failed to decrypt vault key");
 
   unlockedVault = await decryptData<Vault>(vaultKey, stored.encryptedVault);
+  console.log("unlockVault: Successful.");
 }
 
 export async function saveCurrentVault() {
   if (!vaultKey || !unlockedVault) {
-    throw new Error("Vault is not unlocked");
+    throw new Error("Vault is not unlocked (missing keys or vault data)");
   }
 
   try {
@@ -113,10 +151,7 @@ export async function saveCurrentVault() {
 
     const stored = await loadVault();
     if (!stored) {
-      console.error(
-        "saveCurrentVault failed: No existing vault found in storage",
-      );
-      throw new Error("No vault to update");
+      throw new Error("Cannot save: No vault to update");
     }
 
     await saveVault({
@@ -140,6 +175,7 @@ export async function addVaultEntry(
     lastModified: Date.now(),
   };
   vault.entries.push(newEntry);
+  vault.updatedAt = Date.now();
   await saveCurrentVault();
   return newEntry;
 }
@@ -147,11 +183,21 @@ export async function addVaultEntry(
 export async function deleteVaultEntry(id: string) {
   const vault = getVault();
   const originalEntries = [...vault.entries];
+  const originalTombstones = [...(vault.deletedEntryIds || [])];
+
   vault.entries = vault.entries.filter((v) => v.id !== id);
+  if (!vault.deletedEntryIds) vault.deletedEntryIds = [];
+  if (!vault.deletedEntryIds.includes(id)) {
+    vault.deletedEntryIds.push(id);
+  }
+
+  vault.updatedAt = Date.now();
+
   try {
     await saveCurrentVault();
   } catch (err) {
     vault.entries = originalEntries; // Rollback memory
+    vault.deletedEntryIds = originalTombstones;
     throw err;
   }
 }
@@ -166,6 +212,7 @@ export async function updateVaultEntry(
 
   Object.assign(entry, updates);
   entry.lastModified = Date.now();
+  vault.updatedAt = Date.now();
 
   await saveCurrentVault();
   return entry;
@@ -190,15 +237,30 @@ export async function deleteFolder(id: string) {
   const vault = getVault();
   if (!vault.folders) return;
 
+  const originalFolders = [...vault.folders];
+  const originalTombstones = [...(vault.deletedFolderIds || [])];
+
   // Remove folder
   vault.folders = vault.folders.filter((f) => f.id !== id);
+  if (!vault.deletedFolderIds) vault.deletedFolderIds = [];
+  if (!vault.deletedFolderIds.includes(id)) {
+    vault.deletedFolderIds.push(id);
+  }
 
   // Move entries in this folder back to root (null)
   vault.entries.forEach((e) => {
-    if (e.folderId === id) delete e.folderId;
+    if (e.folderId === id) e.folderId = undefined;
   });
 
-  await saveCurrentVault();
+  vault.updatedAt = Date.now();
+
+  try {
+    await saveCurrentVault();
+  } catch (err) {
+    vault.folders = originalFolders;
+    vault.deletedFolderIds = originalTombstones;
+    throw err;
+  }
 }
 
 export async function moveEntryToFolder(
@@ -219,9 +281,10 @@ export async function moveEntryToFolder(
 
 export function startAutoLock(timeoutMs: number = 300000) {
   if (autoLockTimer) clearTimeout(autoLockTimer);
+  if (typeof window === "undefined") return;
   autoLockTimer = window.setTimeout(() => {
     lockVault();
-    alert("Vault auto-locked due to inactivity");
+    console.log("Vault auto-locked due to inactivity");
   }, timeoutMs);
 }
 
@@ -332,6 +395,41 @@ export async function exportRecoveryData() {
     encryptedVaultKey: wrappedVaultKey, // This goes into the kit or the vault metadata
     // In this model, we'll put it in the kit for now to be stateless on server
   };
+}
+
+export async function unlockVaultWithRecoveryKey(
+  recoveryKeyHex: string,
+  wrappedVaultKey: any,
+) {
+  console.log("unlockVaultWithRecoveryKey: Attempting recovery...");
+  const stored = await loadVault();
+  if (!stored) throw new Error("No vault found in storage");
+
+  // Decode hex recovery key
+  const bytes = new Uint8Array(
+    recoveryKeyHex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)),
+  );
+
+  const recoveryKeyBits = await crypto.subtle.importKey(
+    "raw",
+    bytes,
+    "AES-GCM",
+    true,
+    ["encrypt", "decrypt", "wrapKey", "unwrapKey"],
+  );
+
+  try {
+    vaultKey = await unwrapKey(recoveryKeyBits, wrappedVaultKey);
+  } catch (err) {
+    console.error("Recovery key decryption error:", err);
+    throw new Error("Invalid recovery key or vault data.");
+  }
+
+  if (!vaultKey) throw new Error("Failed to decrypt vault key");
+
+  unlockedVault = await decryptData<Vault>(vaultKey, stored.encryptedVault);
+  await saveCurrentVault();
+  console.log("unlockVaultWithRecoveryKey: Successful.");
 }
 
 const BASE_URL = (globalThis as any).PW_API_URL || "http://localhost:4000";
