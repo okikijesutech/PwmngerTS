@@ -180,7 +180,7 @@ export default function App() {
         </Routes>
       </Suspense>
 
-      {location.pathname !== "/dashboard" && (
+      {location.pathname !== "/dashboard" && location.pathname !== "/" && (
         <footer className="footer-main">
           <div className="footer-logo">
             <span className="logo-icon">🛡️</span> Pwmnger<span>TS</span>

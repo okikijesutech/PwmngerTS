@@ -21,8 +21,13 @@ import {
 } from "@pwmnger/app-logic";
 import { passwordStrength } from "../password/strength";
 
+// Initialize API URL for app-logic package
+(globalThis as any).PW_API_URL = "http://localhost:4000";
+
 if (typeof document !== "undefined") {
   document.addEventListener("DOMContentLoaded", async () => {
+    try {
+      console.log("PwmngerTS: Popup initializing...");
     const unlockBtn = document.getElementById("unlockBtn");
     const masterInput = document.getElementById(
       "masterPassword",
@@ -291,23 +296,19 @@ if (typeof document !== "undefined") {
     }
 
     // Initial Vault Check
-    const existingVault = await loadVault();
-    if (existingVault) {
-      lockedDiv.hidden = false;
-    } else {
-      loginDiv.hidden = false; // Default to Login for new installs
+    try {
+      const existingVault = await loadVault();
+      if (existingVault) {
+        lockedDiv.hidden = false;
+        loginDiv.hidden = true;
+        masterInput.focus();
+      } else {
+        loginDiv.hidden = false; // Default to Login for new installs
+      }
+    } catch (e) {
+      console.error("Failed to load vault:", e);
+      alert("Error accessing storage. Please try reloading the extension.");
     }
-
-    // Switch Views
-    showRegisterLink?.addEventListener("click", () => {
-      loginDiv.hidden = true;
-      registerDiv.hidden = false;
-    });
-
-    showLoginLink?.addEventListener("click", () => {
-      registerDiv.hidden = true;
-      loginDiv.hidden = false;
-    });
 
     // Create (Register) logic
     createVaultBtn.addEventListener("click", async () => {
@@ -688,14 +689,26 @@ if (typeof document !== "undefined") {
       }
     }
 
-    // Initial load
-    const vault = await loadVault();
-    if (vault) {
-      lockedDiv.hidden = false;
+    // Switch Views
+    showRegisterLink?.addEventListener("click", () => {
       loginDiv.hidden = true;
-    } else {
-      lockedDiv.hidden = true;
+      registerDiv.hidden = false;
+    });
+
+    showLoginLink?.addEventListener("click", () => {
+      registerDiv.hidden = true;
       loginDiv.hidden = false;
+    });
+
+    } catch (criticalError) {
+      console.error("CRITICAL: Extension failed to initialize", criticalError);
+      document.body.innerHTML = `
+        <div class="glass-card" style="padding: 20px; color: #ff4d4f;">
+          <h3>Critical Error</h3>
+          <p>The extension failed to start correctly. This usually happens if there is a conflict in storage or a missing dependency.</p>
+          <button onclick="location.reload()" style="background: var(--primary)">Retry</button>
+        </div>
+      `;
     }
   });
 }
