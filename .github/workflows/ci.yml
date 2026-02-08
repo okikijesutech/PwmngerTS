@@ -12,21 +12,25 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4.2.2
 
     - name: Setup pnpm
-      uses: pnpm/action-setup@v4
+      uses: pnpm/action-setup@v4.1.0
       with:
         version: 10
 
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v4.2.0
       with:
         node-version: '23'
         cache: 'pnpm'
 
     - name: Install dependencies
-      run: pnpm install
+      run: pnpm install --frozen-lockfile
+
+    - name: Dependency Review
+      if: github.event_name == 'pull_request'
+      uses: actions/dependency-review-action@v4.5.0
 
     - name: Check Formatting
       run: pnpm format:check
@@ -40,8 +44,13 @@ jobs:
     - name: Lint
       run: pnpm -r lint --if-present
 
-    - name: Run unit tests
+    - name: Run unit tests (Jest)
       run: pnpm test
+      continue-on-error: false
+
+    - name: Run unit tests (Vitest)
+      run: pnpm --filter web run test
+      continue-on-error: false
 
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
@@ -56,7 +65,7 @@ jobs:
       run: ls -lR apps/extension/dist
 
     - name: Upload Extension Build
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v4.6.0
       with:
         name: extension-build
         path: apps/extension/dist/

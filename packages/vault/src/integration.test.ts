@@ -75,4 +75,44 @@ describe("Integration Tests (Crypto + Vault)", () => {
 
     expect(decrypted.entries.length).toBe(50);
   });
+
+  test("Folder Lifecycle & Metadata Integrity", async () => {
+    // 1. Setup vault with folder and entry
+    const folderId = "folder-1";
+    vault.folders = [{ id: folderId, name: "Finance" }];
+    vault.entries.push({
+      id: "entry-finance",
+      site: "bank.com",
+      username: "user",
+      password: "pass",
+      folderId: folderId,
+      lastModified: Date.now()
+    });
+    vault.updatedAt = Date.now();
+
+    // 2. Encrypt and Decrypt
+    const encrypted = await encryptData(masterKey, vault);
+    const decrypted = (await decryptData(masterKey, {
+      iv: new Uint8Array(encrypted.iv),
+      data: new Uint8Array(encrypted.data),
+    } as any)) as Vault;
+
+    // 3. Verify Integrity
+    const folders = decrypted.folders;
+    expect(folders).toBeDefined();
+    if (folders && folders.length > 0) {
+      expect(folders[0].name).toBe("Finance");
+    }
+    expect(decrypted.entries[0].folderId).toBe(folderId);
+    expect(decrypted.updatedAt).toBe(vault.updatedAt);
+
+    // 4. Test "Movement" (Simulated)
+    const firstEntry = decrypted.entries[0];
+    if (firstEntry) {
+      firstEntry.folderId = undefined;
+    }
+    decrypted.updatedAt = (decrypted.updatedAt || 0) + 1000;
+    
+    expect(decrypted.updatedAt).toBeGreaterThan(vault.updatedAt || 0);
+  });
 });

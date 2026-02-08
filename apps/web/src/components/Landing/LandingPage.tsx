@@ -69,7 +69,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onRegister })
           <a href="https://github.com/okikijesutech/PwmngerTS">Source</a>
         </div>
         <div className="footer-legal">
-          <a href="#">Privacy Policy</a>
+          <a href="https://github.com/okikijesutech/PwmngerTS/blob/main/PRIVACY_POLICY.md" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
           <a href="#">Terms of Service</a>
           <a href="mailto:support@pwmnger.ts">Support</a>
         </div>

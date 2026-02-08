@@ -1,6 +1,6 @@
 # PwmngerTS Architecture
 
-PwmngerTS is a zero-knowledge, cross-platform password manager. This document details our technical architecture, security model, and data flow.
+PwmngerTS is a zero-knowledge, cross-platform password manager. This document details our technical architecture, security design, and intended data flow.
 
 ## 🏗 Monorepo Structure
 

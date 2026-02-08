@@ -127,6 +127,16 @@ export const Sidebar = memo(({
          <Button variant="danger" onClick={onLock} style={{ width: "100%", fontSize: "13px" }}>
            🔐 Lock Vault
          </Button>
+          <div style={{ textAlign: "center", marginTop: 12 }}>
+            <a 
+              href="https://github.com/okikijesutech/PwmngerTS/blob/main/PRIVACY_POLICY.md" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)", textDecoration: "none" }}
+            >
+              Privacy Policy
+            </a>
+          </div>
       </div>
     </aside>
   );

@@ -43,6 +43,22 @@ Include as much detail as possible:
 
 ---
 
+## 🛡️ Threat Model
+
+Understanding what PwmngerTS protects against helps you evaluate its security for your needs.
+
+### PWMnger protects against:
+- **Database Compromise:** Even if our database is leaked, your passwords are encrypted with keys we don't have.
+- **Accidental Technical Exposure:** Local data leaks from logout state are mitigated by memory clearing.
+- **Weak User Passwords:** Brute force is mitigated by high-cost Argon2id derivation (though strong passwords are still required).
+
+### PWMnger does NOT protect against:
+- **Compromised OS / Malware:** If your machine has a keylogger or malware, no software can fully protect your secrets.
+- **Physical Access:** If an attacker has physical access to your device WHILE it is unlocked, they may access your data.
+- **Phishing:** Entering your master password into a fake PwmngerTS site will compromise your vault.
+
+---
+
 ## ⚠️ Disclaimer
 
 This project is provided **as-is** for educational and experimental purposes.

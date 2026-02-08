@@ -42,6 +42,23 @@ git checkout -b feature/your-feature-name
 - Avoid adding dependencies unless necessary
 - **Do not log sensitive data**
 
+## ⚒️ Local Development & Building
+
+To contribute effectively, you should know how to build and test the project locally.
+
+### 🧩 Building the Extension
+1.  Navigate to the root: `cd PwmngerTS`
+2.  Install dependencies: `pnpm install`
+3.  Build all packages and apps: `pnpm build`
+4.  The extension distributable will be in `apps/extension/dist`.
+5.  To work in watch mode: `pnpm --filter extension dev`.
+
+### 🧪 Running Tests
+We maintain a high bar for testing. Please ensure your changes pass all relevant suites:
+- **Unit Tests:** `pnpm test` (Runs Vitest/Jest across the monorepo).
+- **Security Integration:** `pnpm --filter web test src/__tests__/security_integration.test.ts`.
+- **E2E Tests:** `pnpm test:e2e` (Requires Playwright).
+
 ### 4️⃣ Test Your Changes
 
 Ensure the app:
@@ -77,12 +94,13 @@ If your contribution involves:
 
 Please open a discussion before submitting a PR.
 
+---
+
 ## ❗ What Not to Do
 
-- Do NOT introduce server-side decryption
-- Do NOT store plaintext passwords
-- Do NOT log sensitive information
-- Do NOT weaken encryption parameters
+- **NEVER** add plaintext logging of sensitive data (passwords, keys, salts).
+- **NEVER** introduce server-side decryption logic.
+- **NEVER** weaken cryptographic parameters (Argon2 iterations, AES modes).
+- **NEVER** bypass 2FA checks in the backend.
 
 Thank you for helping make this project better ❤️
-```

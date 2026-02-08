@@ -1,9 +1,11 @@
 # PwmngerTS 🔐
 
+> ⚠️ **IMPORTANT:** This project is experimental and has not undergone a formal security audit. Do not use it to store highly sensitive passwords yet.
+
 **An open-source, zero-knowledge, cross-platform password manager built with TypeScript**
 
-PwmngerTS is a secure, client-side encrypted password manager designed to work across web, browser extensions, and mobile/desktop platforms.
-All encryption happens **locally on the user's device** — the server never sees plaintext passwords.
+PwmngerTS is a client-side encrypted password manager designed to handle secrets across web, browser extensions, and mobile/desktop platforms.
+All encryption is intended to happen **locally on the user's device** — the server is designed to never see plaintext passwords.
 
 > Inspired by zero-knowledge architectures like Bitwarden, but built for learning, extensibility, and open collaboration.
 
@@ -11,7 +13,7 @@ All encryption happens **locally on the user's device** — the server never see
 
 ## ✨ Features (v1.2.0)
 
-- 🔐 **Zero-Knowledge Architecture:** Client-side encryption using Web Crypto API.
+- 🔐 **Zero-Knowledge Design:** Built using client-side encryption (Web Crypto API).
 - 🎨 **Premium UI/UX:** Stunning high-performance landing page with dynamic mesh backgrounds and smooth transitions.
 - 🧩 **Chrome Extension:** Secure browser integration with robust error handling and cloud sync.
 - 📂 **Folder Organization:** Manage and categorize entries efficiently.
