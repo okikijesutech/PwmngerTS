@@ -22,6 +22,7 @@ export {
   resetAutoLock,
   unlockVaultWithRecoveryKey,
   resetLocalVault,
+  rekeyVault,
 } from "./vaultManager";
 export * from "./auth";
 export * from "./webauthn";

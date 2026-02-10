@@ -180,3 +180,29 @@ export async function getMe(req: Request, res: Response) {
     is2FAEnabled: !!user.twoFactorSecret,
   });
 }
+
+export async function changePassword(req: Request, res: Response, next: NextFunction) {
+  const userId = (req as any).user.userId;
+  const { oldAuthHash, newAuthHash } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return next(new AppError("User not found", 404));
+
+    // 1. Verify old password
+    const ok = await argon2.verify(user.passwordHash, oldAuthHash);
+    if (!ok) return next(new AppError("Invalid current password", 401));
+
+    // 2. Hash and update new password
+    const serverHash = await argon2.hash(newAuthHash);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: serverHash }
+    });
+
+    logger.info(`Password updated for user ${userId}`);
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+}

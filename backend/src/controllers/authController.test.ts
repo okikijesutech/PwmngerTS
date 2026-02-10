@@ -14,12 +14,14 @@ describe("Auth Controller", () => {
   let mockRes: Partial<Response>;
   let jsonMock: jest.Mock;
   let statusMock: jest.Mock;
+  let nextMock: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     jsonMock = jest.fn().mockReturnValue(undefined);
     statusMock = jest.fn().mockReturnValue({ json: jsonMock });
+    nextMock = jest.fn();
 
     mockReq = {
       body: {},
@@ -46,7 +48,7 @@ describe("Auth Controller", () => {
         passwordHash: hashedPassword,
       });
 
-      await register(mockReq as any, mockRes as any);
+      await register(mockReq as any, mockRes as any, nextMock);
 
       expect(bcrypt.hash).toHaveBeenCalledWith(password, 12);
       expect(prisma.user.create).toHaveBeenCalledWith({
@@ -66,7 +68,7 @@ describe("Auth Controller", () => {
         new Error("Unique constraint violation"),
       );
 
-      await expect(register(mockReq as any, mockRes as any)).rejects.toThrow();
+      await expect(register(mockReq as any, mockRes as any, nextMock)).rejects.toThrow();
     });
   });
 
@@ -92,7 +94,7 @@ describe("Auth Controller", () => {
 
       process.env.JWT_SECRET = "test_secret";
 
-      await login(mockReq as any, mockRes as any);
+      await login(mockReq as any, mockRes as any, nextMock);
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { email },
@@ -109,7 +111,7 @@ describe("Auth Controller", () => {
 
       (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await login(mockReq as any, mockRes as any);
+      await login(mockReq as any, mockRes as any, nextMock);
 
       expect(statusMock).toHaveBeenCalledWith(401);
       expect(jsonMock).toHaveBeenCalledWith({ error: "Invalid login" });
@@ -126,7 +128,7 @@ describe("Auth Controller", () => {
 
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await login(mockReq as any, mockRes as any);
+      await login(mockReq as any, mockRes as any, nextMock);
 
       expect(statusMock).toHaveBeenCalledWith(401);
       expect(jsonMock).toHaveBeenCalledWith({ error: "Invalid login" });
@@ -146,7 +148,7 @@ describe("Auth Controller", () => {
 
       process.env.JWT_SECRET = "test_secret";
 
-      await login(mockReq as any, mockRes as any);
+      await login(mockReq as any, mockRes as any, nextMock);
 
       const signCall = (jwt.sign as jest.Mock).mock.calls[0];
       expect(signCall[2]).toEqual({ expiresIn: "7d" });

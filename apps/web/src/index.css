@@ -34,6 +34,8 @@
   
   --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --glass: rgba(15, 23, 42, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
 
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
@@ -66,15 +68,18 @@ html, body {
 
 /* Premium Card System */
 .card-premium {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  transition: all 0.2s var(--ease-in-out);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: all 0.3s var(--ease-in-out);
 }
 
 .card-premium:hover {
-  border-color: var(--border-bright);
-  box-shadow: var(--shadow-lg);
+  border-color: rgba(62, 207, 142, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
 }
 
 /* Typography Utility */

@@ -131,3 +131,26 @@ export async function logoutAccount() {
     method: "POST",
   });
 }
+
+export async function changeMasterPassword(oldPass: string, newPass: string) {
+  const oldBuf = stringToUint8Array(oldPass);
+  const newBuf = stringToUint8Array(newPass);
+  
+  try {
+    const oldAuthHash = await deriveAuthHash(oldBuf, (await getAccountStatus()).email);
+    const newAuthHash = await deriveAuthHash(newBuf, (await getAccountStatus()).email);
+
+    const res = await authenticatedFetch(`${BASE_URL}/auth/change-password`, {
+      method: "POST",
+      body: JSON.stringify({ oldAuthHash, newAuthHash })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to change master password");
+    }
+  } finally {
+    wipe(oldBuf);
+    wipe(newBuf);
+  }
+}

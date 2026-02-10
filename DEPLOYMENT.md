@@ -43,7 +43,7 @@ Render will host your Node.js backend and handle automatic database migrations.
     - **Start Command**: `pnpm --filter backend exec prisma migrate deploy && pnpm --filter backend start`
 4.  **Add Environment Variables**:
     - `DATABASE_URL`: (The Supabase connection string)
-    - `JWT_SECRET`: (A random 64-character string)
+    - `JWT_SECRET`: 9e84b1021e79c1aec8b335d0ca048e29211ba88bc7c25b7c2d3aaed362084912
     - `NODE_ENV`: `production`
 
 > [!NOTE]

@@ -11,7 +11,7 @@ export async function copyWithAutoClear(text: string, timeoutMs = 7000) {
       if (current === text) {
         await navigator.clipboard.writeText("");
       }
-    } catch (err) {
+    } catch {
       // Fail silently on clear if document is not focused
     }
   }, timeoutMs);

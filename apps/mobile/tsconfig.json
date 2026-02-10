@@ -3,7 +3,9 @@
   "compilerOptions": {
     "strict": true,
     "baseUrl": ".",
+    "moduleResolution": "bundler",
     "paths": {
+      "expo-status-bar": ["../../node_modules/expo-status-bar"],
       "@pwmnger/crypto": ["../../packages/crypto/src"],
       "@pwmnger/vault": ["../../packages/vault/src"],
       "@pwmnger/storage": ["../../packages/storage/src"],

@@ -539,3 +539,49 @@ export async function syncVaultWithCloud() {
 
   if (!res.ok) throw new Error("Sync failed");
 }
+
+export async function rekeyVault(oldPassword: string, newPassword: string) {
+  if (!vaultKey || !unlockedVault) throw new Error("Vault is locked");
+
+  const oldPasswordBuffer = stringToUint8Array(oldPassword);
+  const newPasswordBuffer = stringToUint8Array(newPassword);
+
+  try {
+    const stored = await loadVault();
+    if (!stored) throw new Error("No vault found to re-key");
+
+    // 1. Verify old password locally
+    const oldSalt = new Uint8Array(stored.salt);
+    const oldMasterKey = await deriveMasterKey(oldPasswordBuffer, oldSalt);
+    
+    // Test unwrapping to ensure password is correct
+    await unwrapKey(oldMasterKey, stored.encryptedVaultKey);
+
+    // 2. Generate new salt and Master Key
+    const newSalt = crypto.getRandomValues(new Uint8Array(16));
+    const newMasterKey = await deriveMasterKey(newPasswordBuffer, newSalt);
+
+    // 3. Re-wrap existing Vault Key with new Master Key
+    const newEncryptedVaultKey = await wrapKey(newMasterKey, vaultKey);
+
+    // 4. Update local storage metadata
+    await saveVault({
+      ...stored,
+      salt: Array.from(newSalt),
+      encryptedVaultKey: newEncryptedVaultKey,
+      updatedAt: Date.now()
+    });
+
+    // 5. Update Backend Password Hash
+    const { changeMasterPassword } = await import("./auth");
+    await changeMasterPassword(oldPassword, newPassword);
+
+    // 6. Sync to cloud
+    await syncVaultWithCloud();
+
+    console.log("Vault re-keyed successfully.");
+  } finally {
+    wipe(oldPasswordBuffer);
+    wipe(newPasswordBuffer);
+  }
+}

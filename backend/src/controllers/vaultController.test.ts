@@ -13,11 +13,13 @@ describe("Vault Controller", () => {
   let mockReq: Partial<AuthRequest>;
   let mockRes: Partial<Response>;
   let jsonMock: jest.Mock;
+  let nextMock: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     jsonMock = jest.fn().mockReturnValue(undefined);
+    nextMock = jest.fn();
 
     mockReq = {
       body: {},
@@ -41,7 +43,7 @@ describe("Vault Controller", () => {
         updatedAt: new Date(),
       });
 
-      await uploadVault(mockReq as any, mockRes as any);
+      await uploadVault(mockReq as any, mockRes as any, nextMock);
 
       expect(prisma.vault.upsert).toHaveBeenCalledWith({
         where: { userId: "user-123" },
@@ -64,7 +66,7 @@ describe("Vault Controller", () => {
         updatedAt: new Date(),
       });
 
-      await uploadVault(mockReq as any, mockRes as any);
+      await uploadVault(mockReq as any, mockRes as any, nextMock);
 
       expect(prisma.vault.upsert).toHaveBeenCalledWith({
         where: { userId: "user-123" },
@@ -82,7 +84,7 @@ describe("Vault Controller", () => {
         new Error("Database error"),
       );
 
-      await expect(uploadVault(mockReq as any, mockRes as any)).rejects.toThrow(
+      await expect(uploadVault(mockReq as any, mockRes as any, nextMock)).rejects.toThrow(
         "Database error",
       );
     });
@@ -99,7 +101,7 @@ describe("Vault Controller", () => {
         updatedAt: new Date(),
       });
 
-      await uploadVault(mockReq as any, mockRes as any);
+      await uploadVault(mockReq as any, mockRes as any, nextMock);
 
       const call = (prisma.vault.upsert as jest.Mock).mock.calls[0][0];
       expect(call.where.userId).toBe("user-456");
@@ -118,7 +120,7 @@ describe("Vault Controller", () => {
         updatedAt: new Date(),
       });
 
-      await downloadVault(mockReq as any, mockRes as any);
+      await downloadVault(mockReq as any, mockRes as any, nextMock);
 
       expect(prisma.vault.findUnique).toHaveBeenCalledWith({
         where: { userId: "user-123" },
@@ -131,7 +133,7 @@ describe("Vault Controller", () => {
     it("should return null if vault doesn't exist", async () => {
       (prisma.vault.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await downloadVault(mockReq as any, mockRes as any);
+      await downloadVault(mockReq as any, mockRes as any, nextMock);
 
       expect(jsonMock).toHaveBeenCalledWith({ encryptedVault: null });
     });
@@ -141,7 +143,7 @@ describe("Vault Controller", () => {
 
       (prisma.vault.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await downloadVault(mockReq as any, mockRes as any);
+      await downloadVault(mockReq as any, mockRes as any, nextMock);
 
       expect(prisma.vault.findUnique).toHaveBeenCalledWith({
         where: { userId: "user-789" },
@@ -154,7 +156,7 @@ describe("Vault Controller", () => {
       );
 
       await expect(
-        downloadVault(mockReq as any, mockRes as any),
+        downloadVault(mockReq as any, mockRes as any, nextMock),
       ).rejects.toThrow("Database error");
     });
 
@@ -168,7 +170,7 @@ describe("Vault Controller", () => {
         updatedAt: new Date("2026-01-29T10:00:00Z"),
       });
 
-      await downloadVault(mockReq as any, mockRes as any);
+      await downloadVault(mockReq as any, mockRes as any, nextMock);
 
       expect(jsonMock).toHaveBeenCalledWith({
         encryptedVault: encryptedVault,

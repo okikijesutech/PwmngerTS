@@ -3,5 +3,5 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 // Help Vitest coalesce React instances
-(globalThis as any).React = React;
-(globalThis as any).ReactDOM = ReactDOM;
+(globalThis as unknown as { React: typeof React }).React = React;
+(globalThis as unknown as { ReactDOM: typeof ReactDOM }).ReactDOM = ReactDOM;

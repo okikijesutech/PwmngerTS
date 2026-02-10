@@ -35,7 +35,7 @@ export async function getRegistrationOptions(req: Request, res: Response) {
   const options = await generateRegistrationOptions({
     rpName,
     rpID,
-    userID: user.id,
+    userID: Buffer.from(user.id),
     userName: user.email,
     // Don't prompt users for device names, let's just use email
     userDisplayName: user.email,
@@ -45,9 +45,8 @@ export async function getRegistrationOptions(req: Request, res: Response) {
      * users from re-registering the same authenticator
      */
     excludeCredentials: user.authenticators.map(auth => ({
-      id: Buffer.from(auth.credentialID, 'base64'),
-      type: 'public-key',
-      // Optional: transports: auth.transports.split(',')
+      id: auth.credentialID, // ID as string base64url is usually fine if it matches the expected type
+      type: 'public-key' as const,
     })),
     authenticatorSelection: {
       residentKey: 'preferred',
@@ -98,12 +97,13 @@ export async function verifyRegistration(req: Request, res: Response) {
   const { verified, registrationInfo } = verification;
 
   if (verified && registrationInfo) {
-    const { credentialPublicKey, credentialID, counter } = registrationInfo;
+    const { credential } = registrationInfo;
+    const { publicKey, id: credentialID, counter } = credential;
 
     await prisma.authenticator.create({
       data: {
         credentialID: Buffer.from(credentialID).toString('base64'),
-        credentialPublicKey: Buffer.from(credentialPublicKey).toString('base64'),
+        credentialPublicKey: Buffer.from(publicKey).toString('base64'),
         counter,
         credentialDeviceType: registrationInfo.credentialDeviceType,
         credentialBackedUp: registrationInfo.credentialBackedUp,
@@ -133,8 +133,8 @@ export async function getAuthenticationOptions(req: Request, res: Response) {
   const options = await generateAuthenticationOptions({
     rpID,
     allowCredentials: user.authenticators.map(auth => ({
-      id: Buffer.from(auth.credentialID, 'base64'),
-      type: 'public-key',
+      id: auth.credentialID,
+      type: 'public-key' as const,
     })),
     userVerification: 'preferred',
   });
@@ -173,9 +173,9 @@ export async function verifyAuthentication(req: Request, res: Response) {
       expectedChallenge,
       expectedOrigin: origin,
       expectedRPID: rpID,
-      authenticator: {
-        credentialID: Buffer.from(authenticator.credentialID, 'base64'),
-        credentialPublicKey: Buffer.from(authenticator.credentialPublicKey, 'base64'),
+      credential: {
+        id: authenticator.credentialID, // Already base64 encoded in DB, usually works if RP is consistent
+        publicKey: Buffer.from(authenticator.credentialPublicKey, 'base64'),
         counter: Number(authenticator.counter),
       },
       requireUserVerification: true,

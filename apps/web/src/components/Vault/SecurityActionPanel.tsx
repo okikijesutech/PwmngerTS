@@ -3,6 +3,7 @@ import { Button } from '@pwmnger/ui';
 import { Shield, ShieldCheck, ShieldAlert, KeyRound } from 'lucide-react';
 import { TwoFactorSetup } from './TwoFactorSetup';
 import { SecurityKeyManager } from './SecurityKeyManager';
+import { ChangePasswordModal } from './ChangePasswordModal';
 import styles from '../../styles/Dashboard.module.css';
 
 interface SecurityActionPanelProps {
@@ -20,8 +21,16 @@ export const SecurityActionPanel: React.FC<SecurityActionPanelProps> = ({
   onRefreshAccountStatus,
   setToast
 }) => {
+  const [showChangePassword, setShowChangePassword] = React.useState(false);
+
   return (
     <div className="card-premium" style={{ padding: 20, flex: 1 }}>
+      {showChangePassword && (
+        <ChangePasswordModal 
+          onClose={() => setShowChangePassword(false)}
+          setToast={setToast}
+        />
+      )}
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
         <Shield size={16} className={styles.accentSuccess} style={{ color: "var(--accent-green)" }} />
         <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>Security</h3>
@@ -75,11 +84,11 @@ export const SecurityActionPanel: React.FC<SecurityActionPanelProps> = ({
 
       <div style={{ marginTop: 20, borderTop: "1px solid var(--border-subtle)", paddingTop: 20 }}>
          <h4 style={{ fontSize: "11px", margin: "0 0 12px 0", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>Advanced</h4>
-         <Button 
-           variant="secondary" 
-           style={{ width: "100%", fontSize: "12px", height: "32px", gap: 8, justifyContent: "flex-start", padding: "0 12px", opacity: 0.6 }}
-           onClick={() => alert("Master Password change feature is coming in v1.1. It requires full vault re-encryption.")}
-         >
+          <Button 
+            variant="secondary" 
+            style={{ width: "100%", fontSize: "12px", height: "32px", gap: 8, justifyContent: "flex-start", padding: "0 12px", opacity: 0.6 }}
+            onClick={() => setShowChangePassword(true)}
+          >
            <KeyRound size={14} /> Change Master Password
          </Button>
       </div>
