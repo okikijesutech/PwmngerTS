@@ -1,6 +1,6 @@
 {
   "name": "pwmngerts",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Zero-knowledge, cross-platform password manager built with TypeScript",
   "author": {
     "name": "PwmngerTS Contributors",

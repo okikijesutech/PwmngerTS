@@ -170,7 +170,7 @@ export const InfoSections: React.FC<InfoSectionsProps> = ({ onRegister }) => {
               </div>
             </div>
             
-            <Button className="w-full" onClick={() => window.open('https://github.com/okikijesutech/PwmngerTS/releases', '_blank')}>
+            <Button className="w-full" onClick={() => window.open('/extension-build.zip', '_blank')}>
               Download ZIP Build
             </Button>
           </div>
@@ -199,7 +199,7 @@ export const InfoSections: React.FC<InfoSectionsProps> = ({ onRegister }) => {
               </div>
             </div>
             
-            <Button variant="secondary" className="w-full" onClick={() => window.open('https://github.com/okikijesutech/PwmngerTS/releases', '_blank')}>
+            <Button variant="secondary" className="w-full" onClick={() => window.open('/PwmngerTS.apk', '_blank')}>
               Download APK
             </Button>
           </div>
@@ -218,7 +218,7 @@ export const InfoSections: React.FC<InfoSectionsProps> = ({ onRegister }) => {
                <p>Beta testing starts Q2 2026</p>
             </div>
 
-            <Button variant="outline" disabled style={{ opacity: 0.5 }}>
+            <Button variant="secondary" disabled style={{ opacity: 0.5 }}>
               Check TestFlight
             </Button>
           </div>

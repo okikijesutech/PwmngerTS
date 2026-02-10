@@ -1,0 +1,2 @@
+This is a placeholder for the PwmngerTS Android APK.
+To build the real APK, follow the instructions in apps/mobile/README.md or running `eas build --platform android`.
