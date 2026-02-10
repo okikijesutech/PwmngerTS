@@ -9,16 +9,21 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@pwmnger/app-logic": "workspace:*",
+    "@pwmnger/crypto": "workspace:*",
+    "@pwmnger/storage": "workspace:*",
+    "@pwmnger/vault": "workspace:*",
+    "@react-navigation/native": "^7.1.28",
+    "@react-navigation/native-stack": "^7.12.0",
     "expo": "~54.0.33",
+    "expo-secure-store": "^15.0.8",
+    "expo-standard-web-crypto": "^1.0.0",
     "expo-status-bar": "~3.0.9",
     "react": "18.3.1",
     "react-native": "0.76.7",
     "react-native-get-random-values": "^1.11.0",
-    "expo-standard-web-crypto": "^1.0.0",
-    "@pwmnger/crypto": "workspace:*",
-    "@pwmnger/app-logic": "workspace:*",
-    "@pwmnger/vault": "workspace:*",
-    "@pwmnger/storage": "workspace:*"
+    "react-native-safe-area-context": "^5.6.2",
+    "react-native-screens": "^4.23.0"
   },
   "devDependencies": {
     "@types/react": "~18.3.12",

@@ -8,7 +8,10 @@ interface LandingNavProps {
 export const LandingNav: React.FC<LandingNavProps> = ({ onLogin }) => {
   return (
     <nav className="landing-nav">
-      <div className="nav-logo">Pwmnger<span>TS</span></div>
+      <div className="nav-logo">
+        <img src="/logo.svg" alt="PwmngerTS" style={{ height: '32px', marginRight: '10px' }} />
+        Pwmnger<span>TS</span>
+      </div>
       <div className="nav-links">
         <a href="#features">Features</a>
         <a href="#how-it-works">Technology</a>

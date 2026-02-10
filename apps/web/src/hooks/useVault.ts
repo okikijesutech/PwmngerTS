@@ -14,7 +14,8 @@ import {
   deleteFolder,
   moveEntryToFolder,
   unlockVaultWithRecoveryKey,
-  exportRecoveryData
+  exportRecoveryData,
+  resetLocalVault,
 } from "@pwmnger/app-logic";
 import type { Vault } from "@pwmnger/vault";
 
@@ -73,9 +74,13 @@ export function useVault() {
 
   const sync = async (token: string) => {
     setIsSyncing(true);
+    setError("");
     try {
       await syncVaultWithCloud(token);
       updateVaultState();
+    } catch (err: any) {
+      setError(err.message || "Sync failed");
+      throw err;
     } finally {
       setIsSyncing(false);
     }
@@ -86,8 +91,13 @@ export function useVault() {
     updateVaultState();
   };
 
-  const addEntry = async (data: any) => {
-    await addVaultEntry(data);
+  const reset = async () => {
+    await resetLocalVault();
+    updateVaultState();
+  };
+
+  const addEntry = async (site: string, username: string, password: string, folderId?: string | null) => {
+    await addVaultEntry({ site, username, password, folderId: folderId || undefined });
     updateVaultState();
   };
 
@@ -150,6 +160,7 @@ export function useVault() {
     deleteFolder: deleteFolderAction,
     moveEntry,
     downloadRecoveryKit,
-    setError
+    setError,
+    reset
   };
 }

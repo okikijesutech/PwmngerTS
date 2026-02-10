@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { Input } from '@pwmnger/ui';
+import { Search } from 'lucide-react';
 import styles from '../../styles/Dashboard.module.css';
 
 interface DashboardHeaderProps {
@@ -10,17 +11,27 @@ interface DashboardHeaderProps {
 export const DashboardHeader = memo(({ search, setSearch }: DashboardHeaderProps) => {
   return (
     <header className={styles.header}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px" }}>My Vault</h1>
-      </div>
+      <h1 style={{ margin: 0, fontSize: "18px", fontWeight: 700, letterSpacing: "-0.01em" }}>Vault</h1>
       
       <div className={styles.headerSearch} style={{ position: "relative" }}>
-         <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", opacity: 0.4, fontSize: "12px" }}>🔍</span>
+         <Search 
+            size={14} 
+            style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-dim)" }} 
+          />
          <Input
-            placeholder="Search vault..."
+            placeholder="Search entries..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: "100%", padding: "8px 16px 8px 36px", borderRadius: "100px", fontSize: "13px", height: "38px", border: "1px solid rgba(0,0,0,0.08)" }}
+            style={{ 
+              width: "100%", 
+              padding: "0 12px 0 34px", 
+              borderRadius: "var(--radius-md)", 
+              fontSize: "13px", 
+              height: "36px", 
+              background: "var(--slate-900)",
+              border: "1px solid var(--border-subtle)",
+              color: "var(--text-primary)"
+            }}
           />
       </div>
     </header>

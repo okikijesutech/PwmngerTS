@@ -142,6 +142,32 @@ export async function loadAuthToken(): Promise<string | null> {
   return localStorage.getItem("pwmnger_token");
 }
 
+export async function clearVault(): Promise<void> {
+  if (typeof _chrome !== "undefined" && _chrome.storage && _chrome.storage.local) {
+    return new Promise((resolve, reject) => {
+      _chrome.storage.local.remove("pwmnger_vault", () => {
+        if (_chrome.runtime.lastError) reject(_chrome.runtime.lastError);
+        else resolve();
+      });
+    });
+  }
+
+  console.log("IndexedDB: Clearing vault...");
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+    const request = store.delete("main");
+
+    request.onsuccess = () => {
+      console.log("IndexedDB: Vault cleared successfully");
+      resolve();
+    };
+    tx.onerror = () => reject(tx.error);
+    request.onerror = () => reject(request.error);
+  });
+}
+
 export async function clearAuthToken(): Promise<void> {
   if (typeof _chrome !== "undefined" && _chrome.storage && _chrome.storage.local) {
     return new Promise((resolve, reject) => {

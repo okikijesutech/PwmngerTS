@@ -1,25 +1,25 @@
-import React from "react";
+import React, { memo } from "react";
 
 interface PasswordStrengthMeterProps {
   strength: "Weak" | "Fair" | "Good" | "Strong" | "Very Strong" | string;
 }
 
-export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
+export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = memo(({
   strength,
 }) => {
   const getStrengthColor = () => {
     switch (strength) {
       case "Weak":
-        return "#ff4d4f";
+        return "#ef4444"; // red-500
       case "Fair":
-        return "#faad14";
+        return "#f59e0b"; // amber-500
       case "Good":
-        return "#52c41a";
+        return "#10b981"; // emerald-500
       case "Strong":
       case "Very Strong":
-        return "#1890ff";
+        return "var(--accent-green)";
       default:
-        return "#d9d9d9";
+        return "var(--slate-700)";
     }
   };
 
@@ -44,11 +44,12 @@ export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
     <div style={{ marginTop: 8, marginBottom: 16 }}>
       <div
         style={{
-          height: 4,
+          height: 6,
           width: "100%",
-          backgroundColor: "#f0f0f0",
-          borderRadius: 2,
+          backgroundColor: "var(--slate-900)",
+          borderRadius: "var(--radius-full)",
           overflow: "hidden",
+          border: "1px solid var(--border-subtle)"
         }}
       >
         <div
@@ -56,21 +57,24 @@ export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
             height: "100%",
             width: getStrengthWidth(),
             backgroundColor: getStrengthColor(),
-            transition: "all 0.3s ease",
+            transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+            boxShadow: strength !== "" ? `0 0 10px ${getStrengthColor()}44` : "none"
           }}
         />
       </div>
       <div
         style={{
-          fontSize: 12,
-          marginTop: 4,
-          color: getStrengthColor(),
+          fontSize: 11,
+          marginTop: 6,
+          color: "var(--text-dim)",
           fontWeight: 600,
           textAlign: "right",
+          textTransform: "uppercase",
+          letterSpacing: "0.025em"
         }}
       >
-        {strength}
+        Strength: <span style={{ color: getStrengthColor() }}>{strength || "None"}</span>
       </div>
     </div>
   );
-};
+});

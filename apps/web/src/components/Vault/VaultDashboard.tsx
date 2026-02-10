@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, memo } from "react";
 import { Button, Input, Toast } from "@pwmnger/ui";
+import { Sparkles, ChevronDown } from "lucide-react";
 import { AddEntryForm } from "./AddEntryForm";
 import { EntryList } from "./EntryList";
 import { Sidebar } from "./Sidebar";
@@ -114,6 +115,14 @@ export const VaultDashboard = memo(({
     return filteredEntries.slice(start, start + itemsPerPage);
   }, [filteredEntries, currentPage]);
 
+  if (!vault || !vault.entries) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "var(--bg-deep)", color: "var(--text-dim)" }}>
+        <p>Vault data unavailable. Please try unlocking again.</p>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       {toast && (
@@ -146,18 +155,19 @@ export const VaultDashboard = memo(({
         <DashboardHeader search={search} setSearch={setSearch} />
 
         <section className={styles.cardArea}>
-          <div className={`glass ${isAddFormExpanded ? styles.expanded : ""}`} style={{ padding: "12px 20px", borderRadius: "var(--radius-md)", flexShrink: 0, transition: "all 0.3s ease" }}>
+          <div className={`${styles.cardActionContainer} ${isAddFormExpanded ? styles.expanded : ""}`}>
             <div 
               className={styles.addEntryToggle}
               onClick={() => setIsAddFormExpanded(!isAddFormExpanded)}
+              style={{ background: "rgba(62, 207, 142, 0.05)", padding: "12px 16px", borderRadius: "var(--radius-md)", border: "1px solid rgba(62, 207, 142, 0.1)" }}
             >
-              <h3 className={styles.sectionTitle} style={{ margin: 0, fontSize: "13px", opacity: 0.7, display: "flex", alignItems: "center", gap: 8 }}>
-                <span>✨</span> Add New Entry
+              <h3 style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "var(--accent-green)", display: "flex", alignItems: "center", gap: 8 }}>
+                <Sparkles size={14} /> Add New Entry
               </h3>
-              <span className={styles.expandIcon}>▼</span>
+              <ChevronDown size={14} className={styles.expandIcon} />
             </div>
             {isAddFormExpanded && (
-              <div style={{ marginTop: 12, borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: 12 }}>
+              <div style={{ marginTop: 12, borderTop: "1px solid var(--border-subtle)", paddingTop: 16 }}>
                 <AddEntryForm onAdd={(s, u, p, f) => {
                   onAddEntry(s, u, p, f);
                   setIsAddFormExpanded(false);
@@ -179,25 +189,27 @@ export const VaultDashboard = memo(({
           </div>
 
           {totalPages > 1 && (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16, padding: "16px 0", borderTop: "1px solid rgba(0,0,0,0.05)", flexShrink: 0 }}>
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 16, padding: "16px 0", borderTop: "1px solid var(--border-subtle)", flexShrink: 0 }}>
               <Button
                 variant="secondary"
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => p - 1)}
+                style={{ height: "32px", fontSize: "12px" }}
               >Previous</Button>
-              <span style={{ fontSize: "14px", color: "#8c8c8c" }}>
+              <span style={{ fontSize: "12px", color: "var(--text-dim)", fontWeight: 500 }}>
                 {currentPage} / {totalPages}
               </span>
               <Button
                 variant="secondary"
                 disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage((p) => p + 1)}
+                style={{ height: "32px", fontSize: "12px" }}
               >Next</Button>
             </div>
           )}
         </section>
 
-        <section className={styles.actionArea} style={{ paddingBottom: 16, flexShrink: 0, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <section className={styles.actionArea}>
           <SecurityActionPanel 
              is2FAEnabled={is2FAEnabled}
              show2FASetup={show2FASetup}

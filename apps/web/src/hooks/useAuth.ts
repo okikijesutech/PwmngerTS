@@ -14,10 +14,13 @@ export function useAuth() {
     const token = localStorage.getItem("pwmnger_token");
     if (!token) return;
     try {
-      const status = await getAccountStatus(token);
+      const status = await getAccountStatus();
        setIs2FAEnabled(status.is2FAEnabled);
+       setSession({ email: status.email });
+       localStorage.setItem("pwmnger_email", status.email);
     } catch (e) {
-      console.error("Failed to fetch 2FA status", e);
+      setSession(null);
+      localStorage.removeItem("pwmnger_email");
     }
   }, []);
 
@@ -25,12 +28,11 @@ export function useAuth() {
     setIsAuthAction(true);
     setError("");
     try {
-      const jwt = await loginAccount(email, password, twoFactorToken);
-      localStorage.setItem("pwmnger_token", jwt);
+      await loginAccount(email, password, twoFactorToken);
       localStorage.setItem("pwmnger_email", email);
       setSession({ email });
       await update2FAStatus();
-      return { jwt, email };
+      return { email };
     } catch (err: any) {
       setError(err.message || "Login failed");
       throw err;
@@ -52,8 +54,8 @@ export function useAuth() {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("pwmnger_token");
+  const logout = async () => {
+    await logoutAccount();
     localStorage.removeItem("pwmnger_email");
     setSession(null);
     setIs2FAEnabled(false);

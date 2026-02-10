@@ -139,63 +139,90 @@ export const InfoSections: React.FC<InfoSectionsProps> = ({ onRegister }) => {
         </div>
       </section>
 
-      <section id="install-extension" className="install-guide">
-         <div className="section-header reveal-on-scroll">
-            <h2>Manual <span className="text-gradient">Extension</span> Setup</h2>
-            <p>Follow these steps to install the PwmngerTS browser guardian.</p>
-         </div>
-         <div className="guide-content glass-premium reveal-on-scroll">
-            <div className="guide-layout">
-              <div className="guide-text">
-                <ol>
-                  <li><strong>Download:</strong> Get the <code>extension-build.zip</code> from <a href="https://github.com/okikijesutech/PwmngerTS/releases" target="_blank" className="text-link">GitHub Releases</a>.</li>
-                  <li><strong>Unpack:</strong> Extract the <code>.zip</code> file to a permanent folder on your drive.</li>
-                  <li><strong>Extensions Page:</strong> Open <code>chrome://extensions</code> in your browser.</li>
-                  <li><strong>Dev Mode:</strong> Toggle <strong>"Developer mode"</strong> in the top-right corner.</li>
-                  <li><strong>Install:</strong> Click <strong>"Load unpacked"</strong> and select the extracted folder.</li>
-                </ol>
-                <div style={{ marginTop: '32px' }}>
-                  <Button onClick={() => window.open('https://github.com/okikijesutech/PwmngerTS/releases', '_blank')}>Download Latest Zip</Button>
-                </div>
-              </div>
-              <div className="guide-visual">
-                <div className="browser-mockup">
-                   <div className="mockup-header">
-                      <div className="dot"></div><div className="dot"></div><div className="dot"></div>
-                   </div>
-                   <div className="mockup-content">
-                      <div className="mockup-toggle">Developer mode <span>●</span></div>
-                   </div>
-                </div>
-              </div>
-            </div>
-         </div>
-      </section>
+      <section id="install" className="install-hub">
+        <div className="section-header reveal-on-scroll">
+          <h2>Deploy Your <span className="text-gradient">Guardian</span></h2>
+          <p>Secure your identity across all platforms in minutes.</p>
+        </div>
 
-      <section id="install-mobile" className="install-guide">
-         <div className="section-header reveal-on-scroll">
-            <h2>Android <span className="text-gradient">Sideload</span> Guide</h2>
-            <p>Get the full PwmngerTS experience on your mobile device.</p>
-         </div>
-         <div className="guide-content glass-premium reveal-on-scroll">
-            <div className="mobile-guide-grid">
-              <div className="qr-box">
-                <div className="qr-mock">📱</div>
-                <p style={{ marginTop: 12, fontSize: 13, opacity: 0.6 }}>Scan to Download APK</p>
+        <div className="install-grid">
+          {/* Extension Card */}
+          <div className="install-card glass-premium reveal-on-scroll">
+            <div className="card-tag">Web & Desktop</div>
+            <div className="card-icon-wrap">
+              <div className="card-icon">🧩</div>
+            </div>
+            <h3>Browser Extension</h3>
+            <p>Our flagship guardian for Chrome, Brave, and Edge.</p>
+            
+            <div className="install-steps">
+              <div className="step">
+                <span className="step-count">1</span>
+                <p>Download the <code>extension-build.zip</code></p>
               </div>
-              <div className="guide-steps">
-                <ol>
-                  <li><strong>APK Download:</strong> Download <code>PwmngerTS.apk</code> from the <a href="https://github.com/okikijesutech/PwmngerTS/releases" target="_blank" className="text-link">latest release</a>.</li>
-                  <li><strong>Permissions:</strong> If prompted, allow <strong>"Install from Unknown Sources"</strong> in your settings.</li>
-                  <li><strong>Launch:</strong> Open the file and follow the Android system prompts.</li>
-                  <li><strong>Secure:</strong> Login and enable Biometric Lock for maximum safety.</li>
-                </ol>
-                <div style={{ marginTop: '24px' }}>
-                  <Button variant="secondary" onClick={() => window.open('https://github.com/okikijesutech/PwmngerTS/releases', '_blank')}>Get Android APK</Button>
-                </div>
+              <div className="step">
+                <span className="step-count">2</span>
+                <p>Enable <strong>Developer Mode</strong> in <code>chrome://extensions</code></p>
+              </div>
+              <div className="step">
+                <span className="step-count">3</span>
+                <p>Click <strong>Load unpacked</strong> and select our folder</p>
               </div>
             </div>
-         </div>
+            
+            <Button className="w-full" onClick={() => window.open('https://github.com/okikijesutech/PwmngerTS/releases', '_blank')}>
+              Download ZIP Build
+            </Button>
+          </div>
+
+          {/* Android Card */}
+          <div className="install-card glass-premium reveal-on-scroll" style={{ transitionDelay: '0.1s' }}>
+            <div className="card-tag">Mobile</div>
+            <div className="card-icon-wrap">
+              <div className="card-icon">🤖</div>
+            </div>
+            <h3>Android Native</h3>
+            <p>Biometric security and autofill for your mobile device.</p>
+            
+            <div className="install-steps">
+              <div className="step">
+                <span className="step-count">1</span>
+                <p>Get the <code>PwmngerTS.apk</code> binary</p>
+              </div>
+              <div className="step">
+                <span className="step-count">2</span>
+                <p>Allow <strong>Unknown Sources</strong> in settings</p>
+              </div>
+              <div className="step">
+                <span className="step-count">3</span>
+                <p>Install and enable <strong>Biometric Lock</strong></p>
+              </div>
+            </div>
+            
+            <Button variant="secondary" className="w-full" onClick={() => window.open('https://github.com/okikijesutech/PwmngerTS/releases', '_blank')}>
+              Download APK
+            </Button>
+          </div>
+
+          {/* iOS Card */}
+          <div className="install-card glass-premium reveal-on-scroll" style={{ transitionDelay: '0.2s' }}>
+             <div className="card-tag muted">Coming Soon</div>
+            <div className="card-icon-wrap">
+              <div className="card-icon">🍎</div>
+            </div>
+            <h3>iOS Guardian</h3>
+            <p>Apple ecosystem integration currently in active development.</p>
+            
+            <div className="install-empty">
+               <div className="pulse-dot"></div>
+               <p>Beta testing starts Q2 2026</p>
+            </div>
+
+            <Button variant="outline" disabled style={{ opacity: 0.5 }}>
+              Check TestFlight
+            </Button>
+          </div>
+        </div>
       </section>
 
       <section className="final-cta reveal-on-scroll">
@@ -324,50 +351,95 @@ export const InfoSections: React.FC<InfoSectionsProps> = ({ onRegister }) => {
           border-radius: 16px !important;
         }
 
-        .guide-layout { display: flex; gap: 48px; align-items: center; }
-        .guide-text { flex: 1.5; }
-        .guide-visual { flex: 1; }
-        .browser-mockup {
-          background: #1e1e1e;
-          border-radius: 12px;
-          border: 1px solid rgba(255,255,255,0.1);
-          overflow: hidden;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        .install-hub { padding: 120px 10%; }
+        .install-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 32px;
         }
-        .mockup-header {
-          background: #333;
-          padding: 8px 12px;
+        .install-card {
+          padding: 40px;
+          border-radius: 32px;
           display: flex;
-          gap: 6px;
+          flex-direction: column;
+          position: relative;
         }
-        .mockup-header .dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
-        .mockup-content { padding: 40px 20px; text-align: center; }
-        .mockup-toggle {
-          background: rgba(255,255,255,0.05);
-          padding: 12px 20px;
-          border-radius: 8px;
-          font-size: 14px;
-          display: inline-flex;
-          align-items: center;
-          gap: 12px;
-          color: var(--text-muted);
+        .card-tag {
+          align-self: flex-start;
+          padding: 6px 12px;
+          background: rgba(22, 119, 255, 0.1);
+          color: var(--primary);
+          border-radius: 100px;
+          font-size: 11px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 24px;
         }
-        .mockup-toggle span { color: var(--primary); font-size: 18px; }
-
-        .text-link { color: var(--primary); text-decoration: none; font-weight: 600; }
-        .text-link:hover { text-decoration: underline; }
-
-        .qr-mock {
-          width: 150px;
-          height: 150px;
-          background: rgba(255,255,255,0.05);
-          border-radius: 20px;
+        .card-tag.muted { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+        .card-icon-wrap {
+          width: 64px;
+          height: 64px;
+          background: rgba(255,255,255,0.03);
+          border-radius: 16px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 60px;
-          border: 1px dashed rgba(255,255,255,0.1);
+          margin-bottom: 24px;
         }
+        .card-icon { font-size: 32px; }
+        .install-card h3 { font-size: 24px; font-weight: 800; margin-bottom: 12px; }
+        .install-card p { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; line-height: 1.6; }
+        
+        .install-steps {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+          margin-bottom: 40px;
+          flex: 1;
+        }
+        .step { display: flex; gap: 16px; align-items: flex-start; }
+        .step-count {
+          width: 24px;
+          height: 24px;
+          background: var(--primary);
+          color: #000;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: 900;
+          flex-shrink: 0;
+        }
+        .step p { margin-bottom: 0; font-size: 13px; color: var(--text-primary); }
+        .step code { background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+
+        .install-empty {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 16px;
+          margin-bottom: 40px;
+          color: var(--text-muted);
+          opacity: 0.5;
+        }
+        .pulse-dot {
+          width: 12px;
+          height: 12px;
+          background: var(--secondary);
+          border-radius: 50%;
+          animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+          0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(110, 89, 255, 0.7); }
+          70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(110, 89, 255, 0); }
+          100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(110, 89, 255, 0); }
+        }
+
+        .w-full { width: 100%; }
 
         .glass-pill {
           background: rgba(255, 255, 255, 0.03);

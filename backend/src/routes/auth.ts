@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { register, login, getMe } from "../controllers/authController";
+import { register, login, getMe, refresh, logout } from "../controllers/authController";
 import { setup2FA, verify2FASetup } from "../controllers/twoFactorController";
 import { requireAuth } from "../middleware/authMiddleware";
 import { body, validationResult } from "express-validator";
@@ -31,6 +31,8 @@ const registerValidation = [
 
 router.post("/register", authLimiter, registerValidation, validate, register);
 router.post("/login", authLimiter, login);
+router.post("/refresh", refresh);
+router.post("/logout", logout);
 router.get("/me", requireAuth, getMe);
 
 // 2FA Routes

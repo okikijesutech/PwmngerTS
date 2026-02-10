@@ -3,61 +3,32 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TextInput, Button, Alert, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { unlockVault, isUnlocked } from '@pwmnger/app-logic';
+import { setStorageBackend } from '@pwmnger/storage';
+import { mobileStorage } from './src/utils/mobileStorageAdapter';
+
+// Configure shared storage to use SecureStore
+setStorageBackend(mobileStorage);
+
+
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import LoginScreen from './src/screens/LoginScreen';
+import RegisterScreen from './src/screens/RegisterScreen';
+import VaultListScreen from './src/screens/VaultListScreen';
+import { PwTheme } from './src/theme';
+
+const Stack = createNativeStackNavigator();
 
 export default function App() {
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [unlocked, setUnlocked] = useState(isUnlocked());
-
-  const handleUnlock = async () => {
-    if (!password) {
-      Alert.alert('Error', 'Please enter your master password');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await unlockVault(password);
-      setUnlocked(true);
-      Alert.alert('Success', 'Vault Unlocked!');
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to unlock vault');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (unlocked) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Vault Unlocked 🔒</Text>
-        <Text>Welcome back to PwmngerTS Mobile</Text>
-        <StatusBar style="auto" />
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>PwmngerTS 🔐</Text>
-      <Text style={styles.subtitle}>Native Mobile Vault</Text>
-      
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Master Password"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-        {loading ? (
-          <ActivityIndicator size="large" color="#0000ff" />
-        ) : (
-          <Button title="Unlock Vault" onPress={handleUnlock} />
-        )}
-      </View>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer theme={PwTheme}>
+      <StatusBar style="light" />
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="VaultList" component={VaultListScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 

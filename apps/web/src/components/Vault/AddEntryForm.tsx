@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Button, Input } from "@pwmnger/ui";
+import { Zap } from "lucide-react";
 import { PasswordStrengthMeter } from "../Shared/PasswordStrengthMeter";
 import { getPasswordStrength } from "../../utils/passwordStrength";
 
@@ -36,21 +37,33 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
       style={{
         display: "grid",
         gridTemplateColumns: "1fr 1fr 1fr auto",
-        gap: 16,
+        gap: 12,
         alignItems: "start",
       }}
     >
       <Input
-        placeholder="Site"
+        placeholder="Site / App"
         value={site}
         onChange={(e) => setSite(e.target.value)}
-        style={{ padding: "8px 12px", fontSize: "13px" }}
+        style={{ 
+          background: "var(--slate-900)", 
+          border: "1px solid var(--border-subtle)", 
+          color: "#fff", 
+          fontSize: "13px", 
+          height: "36px" 
+        }}
       />
       <Input
-        placeholder="Username"
+        placeholder="Username / Email"
         value={username}
         onChange={(e) => setUsername(e.target.value)}
-        style={{ padding: "8px 12px", fontSize: "13px" }}
+        style={{ 
+          background: "var(--slate-900)", 
+          border: "1px solid var(--border-subtle)", 
+          color: "#fff", 
+          fontSize: "13px", 
+          height: "36px" 
+        }}
       />
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <div style={{ position: "relative" }}>
@@ -59,9 +72,18 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{ padding: "8px 40px 8px 12px", fontSize: "13px", width: "100%" }}
+            style={{ 
+              background: "var(--slate-900)", 
+              border: "1px solid var(--border-subtle)", 
+              color: "#fff", 
+              fontSize: "13px", 
+              height: "36px",
+              paddingRight: "36px",
+              width: "100%" 
+            }}
           />
-          <span 
+          <Zap 
+            size={14}
             onClick={() => {
               const { generatePassword } = require("../../utils/passwordGenerator");
               setPassword(generatePassword({
@@ -72,33 +94,31 @@ export const AddEntryForm: React.FC<AddEntryFormProps> = ({
                 symbols: true
               }));
             }}
-            title="Generate strong password"
             style={{ 
               position: "absolute", 
               right: 12, 
               top: "50%", 
               transform: "translateY(-50%)", 
               cursor: "pointer", 
-              fontSize: "14px",
-              opacity: 0.5,
-              userSelect: "none"
+              color: "var(--accent-green)",
+              opacity: 0.6,
+              transition: "opacity 0.2s"
             }}
-          >
-            ⚡
-          </span>
+          />
         </div>
         <PasswordStrengthMeter strength={strength} />
       </div>
       <Button 
         onClick={handleSubmit} 
         style={{ 
-          background: "var(--primary)", 
-          padding: "8px 20px", 
+          background: "var(--accent-green)", 
+          padding: "0 16px", 
           borderRadius: "var(--radius-md)",
           fontWeight: 600,
-          color: "#fff",
+          color: "#000",
           border: "none",
-          fontSize: "13px"
+          fontSize: "13px",
+          height: "36px"
         }}
       >
         Add

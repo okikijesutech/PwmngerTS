@@ -30,3 +30,8 @@ yarn-debug.log*
 # OS
 Thumbs.db
 .DS_Store
+# Automation Scripts
+scripts/
+
+# Test Coverage
+coverage/

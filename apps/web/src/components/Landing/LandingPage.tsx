@@ -18,7 +18,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onRegister })
         if (entry.isIntersecting) {
           entry.target.classList.add('visible');
           if (entry.target.classList.contains('stats-strip')) {
-            animateStats();
+            fetchStatsAndAnimate();
           }
         }
       });
@@ -30,7 +30,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onRegister })
     return () => observer.disconnect();
   }, []);
 
-  const animateStats = () => {
+  const fetchStatsAndAnimate = async () => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+      const res = await fetch(`${apiUrl}/public/stats`);
+      const data = await res.json();
+      animateStats(data.threats, data.users, data.rating);
+    } catch (err) {
+      // Fallback to defaults if backend is down
+      animateStats(1250000, 48000, 99.9);
+    }
+  };
+
+  const animateStats = (targetThreats: number, targetGuardians: number, targetRating: number) => {
     const duration = 2500;
     const startTime = performance.now();
 
@@ -41,9 +53,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onRegister })
       const currentProgress = easeOut(progress);
 
       setStats({
-        threats: Math.floor(currentProgress * 1250000),
-        guardians: Math.floor(currentProgress * 48000),
-        rating: Number((currentProgress * 100).toFixed(1))
+        threats: Math.floor(currentProgress * targetThreats),
+        guardians: Math.floor(currentProgress * targetGuardians),
+        rating: Number((currentProgress * targetRating).toFixed(1))
       });
 
       if (progress < 1) requestAnimationFrame(update);
@@ -54,19 +66,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onRegister })
 
   return (
     <div className="landing-container">
-      <div className="mesh-bg"></div>
       <LandingNav onLogin={onLogin} />
       <Hero onRegister={onRegister} />
       <Stats {...stats} />
       <InfoSections onRegister={onRegister} />
 
       <footer className="footer-main">
-        <div className="footer-logo">Pwmnger<span>TS</span></div>
+        <div className="footer-logo">
+          <img src="/logo.svg" alt="PwmngerTS" style={{ height: '40px', marginBottom: '16px' }} />
+          <div>Pwmnger<span>TS</span></div>
+        </div>
         <div className="footer-links">
           <a href="#features">Features</a>
           <a href="#how-it-works">Technology</a>
           <a href="#compare">Compare</a>
           <a href="https://github.com/okikijesutech/PwmngerTS">Source</a>
+        </div>
+        <div className="footer-badges">
+          <div className="badge-stub">App Store</div>
+          <div className="badge-stub">Google Play</div>
         </div>
         <div className="footer-legal">
           <a href="https://github.com/okikijesutech/PwmngerTS/blob/main/PRIVACY_POLICY.md" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
@@ -103,23 +121,44 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onRegister })
         }
 
         .footer-logo {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
           font-size: 28px;
           font-weight: 900;
           letter-spacing: -1px;
         }
-        .footer-logo span { color: var(--primary); }
+        .footer-logo span { color: var(--accent-green); }
+
+        .footer-badges {
+          display: flex;
+          gap: 16px;
+          margin: 10px 0;
+        }
+        .badge-stub {
+          padding: 8px 20px;
+          background: #111;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--text-muted);
+          cursor: not-allowed;
+          transition: all 0.3s ease;
+        }
+        .badge-stub:hover { border-color: var(--primary); color: #fff; }
 
         .footer-links {
           display: flex;
           gap: 40px;
         }
         .footer-links a {
-          color: var(--text-muted);
+          color: var(--text-dim);
           text-decoration: none;
           font-weight: 500;
-          transition: color 0.3s ease;
+          transition: all 0.3s ease;
         }
-        .footer-links a:hover { color: var(--primary); }
+        .footer-links a:hover { color: var(--accent-green); }
 
         .footer-legal {
           display: flex;
@@ -127,16 +166,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onRegister })
           margin-top: -10px;
         }
         .footer-legal a {
-          color: rgba(255, 255, 255, 0.4);
+          color: var(--text-muted);
           text-decoration: none;
           font-size: 13px;
           transition: color 0.3s ease;
         }
-        .footer-legal a:hover { color: white; }
+        .footer-legal a:hover { color: #fff; }
 
         .footer-copy {
-          color: rgba(255, 255, 255, 0.2);
-          font-size: 13px;
+          color: var(--text-muted);
+          opacity: 0.3;
+          font-size: 11px;
           text-transform: uppercase;
           letter-spacing: 1px;
           margin-top: 20px;

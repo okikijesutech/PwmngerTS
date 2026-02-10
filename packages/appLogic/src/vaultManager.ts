@@ -5,9 +5,11 @@ import {
   generateVaultKey,
   wrapKey,
   unwrapKey,
+  wipe,
+  stringToUint8Array,
 } from "@pwmnger/crypto";
 import { createEmptyVault } from "@pwmnger/vault";
-import { saveVault, loadVault } from "@pwmnger/storage";
+import { saveVault, loadVault, clearVault } from "@pwmnger/storage";
 
 import type { Vault, VaultEntry, Folder } from "@pwmnger/vault";
 
@@ -21,7 +23,26 @@ export function isUnlocked(): boolean {
 
 export function getVault(): Vault {
   if (!unlockedVault) throw new Error("Vault is locked");
-  return unlockedVault;
+  // Sanitize on access to ensure UI doesn't crash on legacy or corrupted data
+  return sanitizeVault(unlockedVault);
+}
+
+function sanitizeVault(vault: Vault): Vault {
+  if (!vault.entries) vault.entries = [];
+  
+  // Filter out corrupted entries (those without site name or id)
+  // and ensure folderId is either string or undefined (no null)
+  vault.entries = vault.entries.filter(e => {
+    return e && typeof e === 'object' && typeof e.site === 'string' && e.id;
+  }).map(e => ({
+    ...e,
+    folderId: e.folderId === null ? undefined : e.folderId
+  }));
+
+  if (!vault.folders) vault.folders = [];
+  vault.folders = vault.folders.filter(f => f && typeof f === 'object' && f.id && f.name);
+
+  return vault;
 }
 
 export async function lockVault() {
@@ -34,28 +55,39 @@ export async function checkVaultExists(): Promise<boolean> {
   return !!stored;
 }
 
+export async function resetLocalVault() {
+  await clearVault();
+  unlockedVault = null;
+  vaultKey = null;
+}
+
 export async function createNewVault(masterPassword: string) {
   console.log("createNewVault: Starting...");
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  console.log("createNewVault: Salt generated, deriving master key...");
-  const masterKey = await deriveMasterKey(masterPassword, salt);
+  const passwordBuffer = stringToUint8Array(masterPassword);
+  try {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    console.log("createNewVault: Salt generated, deriving master key...");
+    const masterKey = await deriveMasterKey(passwordBuffer, salt);
 
-  console.log("createNewVault: Master key derived, generating vault key...");
-  vaultKey = await generateVaultKey();
-  unlockedVault = createEmptyVault();
+    console.log("createNewVault: Master key derived, generating vault key...");
+    vaultKey = await generateVaultKey();
+    unlockedVault = createEmptyVault();
 
-  console.log("createNewVault: Encrypting initial vault...");
-  const encryptedVault = await encryptData(vaultKey, unlockedVault);
-  console.log("createNewVault: Wrapping vault key...");
-  const encryptedVaultKey = await wrapKey(masterKey, vaultKey);
+    console.log("createNewVault: Encrypting initial vault...");
+    const encryptedVault = await encryptData(vaultKey, unlockedVault);
+    console.log("createNewVault: Wrapping vault key...");
+    const encryptedVaultKey = await wrapKey(masterKey, vaultKey);
 
-  await saveVault({
-    salt: Array.from(salt),
-    encryptedVault,
-    encryptedVaultKey,
-    updatedAt: Date.now(),
-  });
-  console.log("createNewVault: Finished.");
+    await saveVault({
+      salt: Array.from(salt),
+      encryptedVault,
+      encryptedVaultKey,
+      updatedAt: Date.now(),
+    });
+    console.log("createNewVault: Finished.");
+  } finally {
+    wipe(passwordBuffer);
+  }
 }
 
 export function mergeVaults(local: Vault, remote: Vault): Vault {
@@ -122,22 +154,29 @@ export async function unlockVault(masterPassword: string) {
   }
 
   const salt = new Uint8Array(stored.salt);
-  const masterKey = await deriveMasterKey(masterPassword, salt);
+  const passwordBuffer = stringToUint8Array(masterPassword);
 
-  // FIX: Use unwrapKey for CryptoKey instead of decryptData
   try {
-    vaultKey = await unwrapKey(masterKey, stored.encryptedVaultKey);
-  } catch (err) {
-    console.error("Master key decryption error (Key mismatch):", err);
-    throw new Error(
-      "Invalid master password or incompatible vault data. Try clearing local cache if you are sure your password is correct.",
-    );
+    const masterKey = await deriveMasterKey(passwordBuffer, salt);
+
+    // FIX: Use unwrapKey for CryptoKey instead of decryptData
+    try {
+      vaultKey = await unwrapKey(masterKey, stored.encryptedVaultKey);
+    } catch (err) {
+      console.error("Master key decryption error (Key mismatch):", err);
+      throw new Error(
+        "Invalid master password or incompatible vault data. Try clearing local cache if you are sure your password is correct.",
+      );
+    }
+
+    if (!vaultKey) throw new Error("Failed to decrypt vault key");
+
+    unlockedVault = await decryptData<Vault>(vaultKey, stored.encryptedVault);
+    unlockedVault = sanitizeVault(unlockedVault);
+    console.log("unlockVault: Successful.");
+  } finally {
+    wipe(passwordBuffer);
   }
-
-  if (!vaultKey) throw new Error("Failed to decrypt vault key");
-
-  unlockedVault = await decryptData<Vault>(vaultKey, stored.encryptedVault);
-  console.log("unlockVault: Successful.");
 }
 
 export async function saveCurrentVault() {
@@ -168,6 +207,11 @@ export async function saveCurrentVault() {
 export async function addVaultEntry(
   entry: Omit<VaultEntry, "id" | "lastModified">,
 ) {
+  // Integrity check
+  if (!entry || typeof entry.site !== 'string' || !entry.site.trim()) {
+    throw new Error("Invalid entry: Site name is required");
+  }
+
   const vault = getVault();
   const newEntry: VaultEntry = {
     ...entry,
@@ -422,7 +466,7 @@ export async function unlockVaultWithRecoveryKey(
     vaultKey = await unwrapKey(recoveryKeyBits, wrappedVaultKey);
   } catch (err) {
     console.error("Recovery key decryption error:", err);
-    throw new Error("Invalid recovery key or vault data.");
+    throw new Error("This recovery kit does not match your vault. Please make sure you are using the latest kit generated for this account.");
   }
 
   if (!vaultKey) throw new Error("Failed to decrypt vault key");
@@ -434,50 +478,60 @@ export async function unlockVaultWithRecoveryKey(
 
 const BASE_URL = (globalThis as any).PW_API_URL || "http://localhost:4000";
 
-export async function syncToCloud(token: string) {
+export async function syncToCloud() {
   const encrypted = await exportEncryptedVault();
 
-  await fetch(`${BASE_URL}/vault/sync`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ vaultPayload: encrypted }),
-  });
-}
-
-export async function syncFromCloud(token: string) {
   const res = await fetch(`${BASE_URL}/vault/sync`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ vaultPayload: encrypted }),
+    credentials: "include",
   });
 
-  const { vaultPayload } = await res.json();
-  if (vaultPayload) {
-    await importEncryptedVault(vaultPayload);
+  if (res.status === 401) {
+    throw new Error("Session expired. Please log in again to sync your vault.");
+  }
+
+  if (!res.ok) {
+    throw new Error(`Cloud sync failed: ${res.statusText}`);
   }
 }
-export async function syncVaultWithCloud(token: string) {
+
+export async function syncFromCloud() {
+  const res = await fetch(`${BASE_URL}/vault/sync`, {
+    credentials: "include",
+  });
+
+  if (res.status === 401) {
+    throw new Error("Session expired. Please log in again to sync your vault.");
+  }
+
+  if (!res.ok) {
+     throw new Error(`Failed to fetch cloud data: ${res.statusText}`);
+  }
+
+  const data = await res.json();
+  if (data.vaultPayload) {
+    await importEncryptedVault(data.vaultPayload);
+  }
+}
+export async function syncVaultWithCloud() {
   // 1. Pull latest from cloud
-  await syncFromCloud(token);
+  await syncFromCloud();
 
   // 2. Push current (merged) local to cloud
   const encrypted = await exportEncryptedVault();
 
   const res = await fetch(`${BASE_URL}/vault/sync`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ vaultPayload: encrypted }),
+    credentials: "include",
   });
 
   if (res.status === 409) {
     // Conflict handled by immediate retry pull
-    await syncFromCloud(token);
+    await syncFromCloud();
     throw new Error(
       "Conflict detected and resolved from cloud. Please review your entries.",
     );

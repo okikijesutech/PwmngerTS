@@ -1,7 +1,7 @@
 import { argon2id } from "hash-wasm";
 
 export async function deriveMasterKey(
-  password: string,
+  password: string | Uint8Array,
   salt: Uint8Array | ArrayBuffer,
 ) {
   const saltUint8 = salt instanceof Uint8Array ? salt : new Uint8Array(salt);
@@ -26,7 +26,7 @@ export async function deriveMasterKey(
 }
 
 export async function deriveAuthHash(
-  password: string,
+  password: string | Uint8Array,
   saltString: string,
 ): Promise<string> {
   const encoder = new TextEncoder();

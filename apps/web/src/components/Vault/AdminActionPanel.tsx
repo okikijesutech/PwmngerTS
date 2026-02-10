@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '@pwmnger/ui';
+import { Settings, Download, Upload } from 'lucide-react';
 import styles from '../../styles/Dashboard.module.css';
 
 interface AdminActionPanelProps {
@@ -8,17 +9,33 @@ interface AdminActionPanelProps {
 
 export const AdminActionPanel: React.FC<AdminActionPanelProps> = ({ onImportVault }) => {
   return (
-    <div className="glass" style={{ padding: 16, borderRadius: "var(--radius-md)", display: "flex", flexDirection: "column" }}>
-      <h3 className={styles.sectionTitle} style={{ fontSize: "12px", marginBottom: 8, opacity: 0.6 }}>⚙️ Administration</h3>
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
-         <p style={{ fontSize: "12px", color: "var(--text-secondary)", margin: 0, flex: 1 }}>
-           Manage imports, exports, and recovery.
-         </p>
+    <div className="card-premium" style={{ padding: 20, flex: 1, display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+        <Settings size={16} style={{ color: "var(--slate-400)" }} />
+        <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>Administration</h3>
       </div>
+      
+      <p style={{ fontSize: "12px", color: "var(--text-dim)", margin: "0 0 16px 0" }}>
+        Manage your vault data through encrypted JSON imports and exports.
+      </p>
       
       <div style={{ display: "flex", gap: 8, marginTop: "auto" }}>
         <label style={{ flex: 1 }}>
-          <Button variant="secondary" style={{ width: "100%", fontSize: "12px", padding: "8px" }}>📥 Import JSON</Button>
+          <div className={`${styles.fakeButton} card-premium`} style={{ 
+            width: "100%", 
+            fontSize: "12px", 
+            height: "36px", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            gap: 8,
+            cursor: "pointer",
+            background: "var(--slate-900)",
+            color: "var(--text-primary)",
+            fontWeight: 500
+          }}>
+            <Download size={14} /> Import
+          </div>
           <input
             type="file"
             accept=".json"
@@ -38,7 +55,7 @@ export const AdminActionPanel: React.FC<AdminActionPanelProps> = ({ onImportVaul
         </label>
         <Button 
           variant="secondary" 
-          style={{ flex: 1, fontSize: "12px", padding: "8px" }}
+          style={{ flex: 1, fontSize: "12px", height: "36px", gap: 8 }}
           onClick={() => {
             if (!confirm("Export unencrypted passwords?")) return;
             import("@pwmnger/app-logic").then(async ({ exportVaultData }) => {
@@ -52,7 +69,7 @@ export const AdminActionPanel: React.FC<AdminActionPanelProps> = ({ onImportVaul
             });
           }}
         >
-          📤 Export Vault
+          <Upload size={14} /> Export
         </Button>
       </div>
     </div>

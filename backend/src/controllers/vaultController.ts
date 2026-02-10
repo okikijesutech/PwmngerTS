@@ -1,11 +1,12 @@
 import { prisma } from "../db/prisma";
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
+import { AppError } from "../utils/errors";
 
 interface AuthRequest extends Request {
   user?: { userId: string };
 }
 
-export async function uploadVault(req: AuthRequest, res: Response) {
+export async function uploadVault(req: AuthRequest, res: Response, next: NextFunction) {
   const { vaultPayload } = req.body;
   const userId = req.user!.userId;
 
@@ -27,11 +28,7 @@ export async function uploadVault(req: AuthRequest, res: Response) {
     const clientUpdatedAt = vaultPayload.updatedAt || 0;
 
     if (cloudUpdatedAt > clientUpdatedAt) {
-      return res.status(409).json({
-        success: false,
-        error: "CONFLICT",
-        message: "Cloud version is newer than client version",
-      });
+      return next(new AppError("CONFLICT: Cloud version is newer than client version", 409));
     }
   }
 
@@ -46,16 +43,20 @@ export async function uploadVault(req: AuthRequest, res: Response) {
   res.json({ success: true });
 }
 
-export async function downloadVault(req: AuthRequest, res: Response) {
-  const userId = req.user!.userId;
+export async function downloadVault(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const userId = req.user!.userId;
 
-  const vault = await prisma.vault.findUnique({ where: { userId } });
-  if (!vault) return res.json({ vaultPayload: null });
+    const vault = await prisma.vault.findUnique({ where: { userId } });
+    if (!vault) return res.json({ vaultPayload: null });
 
-  const payload =
-    typeof vault.encrypted === "string"
-      ? JSON.parse(vault.encrypted)
-      : vault.encrypted;
+    const payload =
+      typeof vault.encrypted === "string"
+        ? JSON.parse(vault.encrypted)
+        : vault.encrypted;
 
-  res.json({ vaultPayload: payload });
+    res.json({ vaultPayload: payload });
+  } catch (error) {
+    next(error);
+  }
 }
