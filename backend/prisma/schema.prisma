@@ -15,9 +15,23 @@ model User {
   email        String   @unique
   passwordHash String
   twoFactorSecret String? // Null = 2FA disabled
+  authenticators Authenticator[]
   vault        Vault?
   refreshTokens RefreshToken[]
   createdAt    DateTime @default(now())
+}
+
+model Authenticator {
+  id                   String   @id @default(uuid())
+  credentialID         String   @unique
+  credentialPublicKey  String
+  counter              BigInt
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?  // Comma-separated or JSON
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id])
+  createdAt            DateTime @default(now())
 }
 
 model RefreshToken {

@@ -11,7 +11,21 @@ import logger from "./utils/logger";
 import { errorHandler } from "./middleware/errorHandler";
 import cookieParser from "cookie-parser";
 
+import session from "express-session";
+
 const app: express.Application = express();
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || "pwmnger-secret-session",
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    secure: process.env.NODE_ENV === "production", 
+    httpOnly: true, 
+    sameSite: "lax", 
+    maxAge: 60 * 60 * 1000 // 1 hour 
+  }
+}));
 
 app.use(compression());
 app.use(helmet());

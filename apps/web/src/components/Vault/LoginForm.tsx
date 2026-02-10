@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { Button, Input } from "@pwmnger/ui";
-import { Mail, Lock, ShieldCheck, ArrowRight } from "lucide-react";
+import { Mail, Lock, ShieldCheck, ArrowRight, Key } from "lucide-react";
 
 interface LoginFormProps {
   onLogin: (
@@ -85,7 +85,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               <ShieldCheck size={24} style={{ color: "var(--accent-green)" }} />
            </div>
            <p style={{ fontSize: "14px", fontWeight: 600, margin: "0 0 4px" }}>Identity Verification</p>
-           <p style={{ fontSize: "12px", color: "var(--text-dim)", marginBottom: 24 }}>Enter the 6-digit code from your authenticator app.</p>
+           <p style={{ fontSize: "12px", color: "var(--text-dim)", marginBottom: 24 }}>Enter your 2FA code or use your security key.</p>
            <Input
             placeholder="000 000"
             label="2FA Code"
@@ -103,6 +103,29 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               letterSpacing: "0.2em"
             }}
           />
+          <div style={{ marginTop: 20 }}>
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                try {
+                  const { getWebAuthnLoginOptions, verifyWebAuthnLogin, startAuthentication } = await import("@pwmnger/app-logic");
+                  const options = await getWebAuthnLoginOptions(email);
+                  const assertion = await startAuthentication(options);
+                  await verifyWebAuthnLogin(assertion);
+                  // If successful, the server should ideally set a verification session or similar
+                  // For this flow, we'll just try to login with a special token or similar
+                  // FIXED: In our updated backend, WebAuthn verification will set a session that allows the next login attempt or provides the JWT directly.
+                  // For now, we'll suggest a re-login which will now bypass 2FA if verified.
+                  handleSubmit(); 
+                } catch (err: any) {
+                  console.error(err);
+                }
+              }}
+              style={{ fontSize: "12px", width: "100%", height: "36px", gap: 8 }}
+            >
+              <Key size={14} /> Use Security Key (YubiKey)
+            </Button>
+          </div>
         </div>
       )}
 
@@ -135,7 +158,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             border: "none"
           }}
         >
-          {loading ? "Verifying..." : show2FA ? "Confirm Identity" : "Continue to Vault"} 
+          {loading ? "Verifying..." : show2FA ? "Confirm Code" : "Continue to Vault"} 
           {!loading && <ArrowRight size={16} />}
         </Button>
       </div>

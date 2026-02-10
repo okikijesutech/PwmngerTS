@@ -24,6 +24,5 @@ export {
   resetLocalVault,
 } from "./vaultManager";
 export * from "./auth";
-// Re-export specific 2FA functions if needed, spread update handles it if cleaner, but let's be explicit if needed.
-// Actually `export * from "./auth"` covers it.
+export * from "./webauthn";
 export * from "./health";

@@ -14,6 +14,7 @@
   "dependencies": {
     "@pwmnger/app-logic": "workspace:*",
     "@pwmnger/ui": "workspace:*",
+    "@simplewebauthn/browser": "^13.2.2",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

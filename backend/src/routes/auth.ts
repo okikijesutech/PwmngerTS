@@ -1,6 +1,12 @@
 import { Router } from "express";
 import { register, login, getMe, refresh, logout } from "../controllers/authController";
 import { setup2FA, verify2FASetup } from "../controllers/twoFactorController";
+import { 
+  getRegistrationOptions, 
+  verifyRegistration, 
+  getAuthenticationOptions, 
+  verifyAuthentication 
+} from "../controllers/webAuthnController";
 import { requireAuth } from "../middleware/authMiddleware";
 import { body, validationResult } from "express-validator";
 import rateLimit from "express-rate-limit";
@@ -38,5 +44,11 @@ router.get("/me", requireAuth, getMe);
 // 2FA Routes
 router.post("/2fa/setup", requireAuth, setup2FA);
 router.post("/2fa/verify", requireAuth, verify2FASetup);
+
+// WebAuthn / YubiKey Routes
+router.post("/2fa/webauthn/register/options", requireAuth, getRegistrationOptions);
+router.post("/2fa/webauthn/register/verify", requireAuth, verifyRegistration);
+router.post("/2fa/webauthn/login/options", getAuthenticationOptions);
+router.post("/2fa/webauthn/login/verify", verifyAuthentication);
 
 export default router;

@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@pwmnger/crypto": "workspace:*",
+    "@pwmnger/storage": "workspace:*",
     "@pwmnger/vault": "workspace:*",
-    "@pwmnger/storage": "workspace:*"
+    "@simplewebauthn/browser": "^13.2.2",
+    "@simplewebauthn/types": "^12.0.0"
   }
 }

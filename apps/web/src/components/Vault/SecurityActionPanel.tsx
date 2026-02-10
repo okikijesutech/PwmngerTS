@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@pwmnger/ui';
 import { Shield, ShieldCheck, ShieldAlert, KeyRound } from 'lucide-react';
 import { TwoFactorSetup } from './TwoFactorSetup';
+import { SecurityKeyManager } from './SecurityKeyManager';
 import styles from '../../styles/Dashboard.module.css';
 
 interface SecurityActionPanelProps {
@@ -51,13 +52,11 @@ export const SecurityActionPanel: React.FC<SecurityActionPanelProps> = ({
           <TwoFactorSetup
             onSetup={async () => {
               const { setup2FA } = await import("@pwmnger/app-logic");
-              const token = localStorage.getItem("pwmnger_token")!;
-              return setup2FA(token);
+              return setup2FA();
             }}
             onVerify={async (tokenStr, secret) => {
               const { verify2FASetup } = await import("@pwmnger/app-logic");
-              const authToken = localStorage.getItem("pwmnger_token")!;
-              const res = await verify2FASetup(authToken, tokenStr, secret);
+              const res = await verify2FASetup(tokenStr, secret);
               if (res.success) {
                 onRefreshAccountStatus();
                 setToast({ message: "2FA Enabled!", type: "success" });
@@ -68,6 +67,11 @@ export const SecurityActionPanel: React.FC<SecurityActionPanelProps> = ({
           />
         </div>
       )}
+
+      <SecurityKeyManager 
+        onRefresh={onRefreshAccountStatus}
+        setToast={setToast}
+      />
 
       <div style={{ marginTop: 20, borderTop: "1px solid var(--border-subtle)", paddingTop: 20 }}>
          <h4 style={{ fontSize: "11px", margin: "0 0 12px 0", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>Advanced</h4>
