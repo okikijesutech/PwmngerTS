@@ -128,8 +128,9 @@ export const Sidebar = memo(({
               border: "1px solid var(--border-subtle)", 
               color: "#fff", 
               fontSize: "12px", 
-              height: "32px",
-              padding: "0 8px"
+              height: "36px",
+              padding: "0 10px",
+              borderRadius: "var(--radius-md) 0 0 var(--radius-md)"
             }}
           />
           <Button
@@ -138,12 +139,14 @@ export const Sidebar = memo(({
               background: "var(--slate-800)", 
               color: "#fff", 
               border: "1px solid var(--border-subtle)", 
-              height: "32px", 
-              minWidth: "32px", 
+              borderLeft: "none",
+              height: "36px", 
+              minWidth: "36px", 
               padding: 0,
               display: "flex",
               alignItems: "center",
-              justifyContent: "center"
+              justifyContent: "center",
+              borderRadius: "0 var(--radius-md) var(--radius-md) 0"
             }}
           >
             <Plus size={14} />

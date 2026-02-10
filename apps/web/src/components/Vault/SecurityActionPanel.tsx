@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@pwmnger/ui';
 import { Shield, ShieldCheck, ShieldAlert, KeyRound } from 'lucide-react';
-import { TwoFactorSetup } from './TwoFactorSetup';
+import { TwoFactorSetupModal } from './TwoFactorSetupModal';
 import { SecurityKeyManager } from './SecurityKeyManager';
 import { ChangePasswordModal } from './ChangePasswordModal';
 import styles from '../../styles/Dashboard.module.css';
@@ -31,67 +31,76 @@ export const SecurityActionPanel: React.FC<SecurityActionPanelProps> = ({
           setToast={setToast}
         />
       )}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-        <Shield size={16} className={styles.accentSuccess} style={{ color: "var(--accent-green)" }} />
-        <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>Security</h3>
-      </div>
-      
-      {is2FAEnabled ? (
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(62, 207, 142, 0.05)", border: "1px solid rgba(62, 207, 142, 0.1)", borderRadius: "var(--radius-md)" }}>
-          <ShieldCheck size={16} style={{ color: "var(--accent-green)" }} />
-          <span style={{ fontSize: "13px", color: "var(--accent-green)", fontWeight: 500 }}>2FA is active</span>
-        </div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.1)", borderRadius: "var(--radius-md)" }}>
-            <ShieldAlert size={16} style={{ color: "#ef4444" }} />
-            <span style={{ fontSize: "13px", color: "#ef4444", fontWeight: 500 }}>2FA is disabled</span>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        {/* Left Column: 2FA */}
+        <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <Shield size={14} className={styles.accentSuccess} style={{ color: "var(--accent-green)" }} />
+            <h3 style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>Two-Factor Auth</h3>
           </div>
-          <p style={{ fontSize: "12px", color: "var(--text-dim)", margin: 0 }}>
-            Enable Two-Factor Authentication (TOTP) to secure your vault with a temporary code.
-          </p>
-          <Button variant="secondary" onClick={() => setShow2FASetup(!show2FASetup)} style={{ fontSize: "12px", height: "32px", width: "100%" }}>
-            {show2FASetup ? "Cancel Setup" : "Enable 2FA"}
-          </Button>
+
+          {is2FAEnabled ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(62, 207, 142, 0.05)", border: "1px solid rgba(62, 207, 142, 0.1)", borderRadius: "var(--radius-md)" }}>
+              <ShieldCheck size={16} style={{ color: "var(--accent-green)" }} />
+              <span style={{ fontSize: "13px", color: "var(--accent-green)", fontWeight: 500 }}>2FA is active</span>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(239, 68, 68, 0.05)", border: "1px solid rgba(239, 68, 68, 0.1)", borderRadius: "var(--radius-md)" }}>
+                <ShieldAlert size={16} style={{ color: "#ef4444" }} />
+                <span style={{ fontSize: "13px", color: "#ef4444", fontWeight: 500 }}>2FA is disabled</span>
+              </div>
+              <p style={{ fontSize: "12px", color: "var(--text-dim)", margin: 0 }}>
+                Enable 2FA (TOTP) for better security.
+              </p>
+              <Button variant="secondary" onClick={() => setShow2FASetup(true)} style={{ fontSize: "12px", height: "32px", width: "100%", marginTop: "auto" }}>
+                Enable 2FA
+              </Button>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Right Column: Keys & Advanced */}
+        <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+          <div>
+            <SecurityKeyManager 
+              onRefresh={onRefreshAccountStatus}
+              setToast={setToast}
+            />
+          </div>
+
+          <div style={{ marginTop: "auto", paddingTop: 12 }}>
+            <Button 
+              variant="secondary" 
+              style={{ width: "100%", fontSize: "12px", height: "32px", gap: 8, justifyContent: "flex-start", padding: "0 12px", opacity: 0.8 }}
+              onClick={() => setShowChangePassword(true)}
+            >
+             <KeyRound size={14} /> Change Master Password
+           </Button>
+          </div>
+        </div>
+      </div>
 
       {show2FASetup && (
-        <div style={{ marginTop: 20, borderTop: "1px solid var(--border-subtle)", paddingTop: 20 }}>
-          <TwoFactorSetup
-            onSetup={async () => {
-              const { setup2FA } = await import("@pwmnger/app-logic");
-              return setup2FA();
-            }}
-            onVerify={async (tokenStr, secret) => {
-              const { verify2FASetup } = await import("@pwmnger/app-logic");
-              const res = await verify2FASetup(tokenStr, secret);
-              if (res.success) {
-                onRefreshAccountStatus();
-                setToast({ message: "2FA Enabled!", type: "success" });
-                setShow2FASetup(false);
-              }
-              return res;
-            }}
-          />
-        </div>
+        <TwoFactorSetupModal 
+          onClose={() => setShow2FASetup(false)}
+          setToast={setToast}
+          onSetup={async () => {
+             const { setup2FA } = await import("@pwmnger/app-logic");
+             return setup2FA();
+          }}
+          onVerify={async (tokenStr, secret) => {
+             const { verify2FASetup } = await import("@pwmnger/app-logic");
+             const res = await verify2FASetup(tokenStr, secret);
+             if (res.success) {
+               onRefreshAccountStatus();
+               setToast({ message: "2FA Enabled!", type: "success" });
+               // Modal handles close on "Done"
+             }
+             return res;
+          }}
+        />
       )}
-
-      <SecurityKeyManager 
-        onRefresh={onRefreshAccountStatus}
-        setToast={setToast}
-      />
-
-      <div style={{ marginTop: 20, borderTop: "1px solid var(--border-subtle)", paddingTop: 20 }}>
-         <h4 style={{ fontSize: "11px", margin: "0 0 12px 0", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: 700 }}>Advanced</h4>
-          <Button 
-            variant="secondary" 
-            style={{ width: "100%", fontSize: "12px", height: "32px", gap: 8, justifyContent: "flex-start", padding: "0 12px", opacity: 0.6 }}
-            onClick={() => setShowChangePassword(true)}
-          >
-           <KeyRound size={14} /> Change Master Password
-         </Button>
-      </div>
     </div>
   );
 };

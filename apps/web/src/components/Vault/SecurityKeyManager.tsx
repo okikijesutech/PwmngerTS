@@ -39,23 +39,21 @@ export const SecurityKeyManager: React.FC<SecurityKeyManagerProps> = ({ onRefres
   };
 
   return (
-    <div style={{ marginTop: 24, borderTop: "1px solid var(--border-subtle)", paddingTop: 20 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-        <Key size={16} style={{ color: "var(--primary)" }} />
-        <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>Security Keys (FIDO2/WebAuthn)</h3>
+    <div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Key size={14} style={{ color: "var(--primary)" }} />
+          <h3 style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: "var(--text-primary)" }}>Security Keys</h3>
+        </div>
       </div>
       
-      <p style={{ fontSize: "12px", color: "var(--text-dim)", marginBottom: 16 }}>
-        Use a physical security key (like a YubiKey) for industrial-grade protection against phishing.
-      </p>
-
       <Button 
         variant="secondary" 
         onClick={handleAddKey} 
         disabled={loading}
-        style={{ width: "100%", fontSize: "12px", height: "36px", gap: 8 }}
+        style={{ width: "100%", fontSize: "12px", height: "32px", gap: 8 }}
       >
-        <Plus size={14} /> {loading ? "Waiting for Key..." : "Register New Security Key"}
+        <Plus size={14} /> {loading ? "Waiting..." : "Add Key (FIDO2)"}
       </Button>
     </div>
   );

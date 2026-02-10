@@ -14,9 +14,9 @@ export const DashboardHeader = memo(({ search, setSearch }: DashboardHeaderProps
       <h1 style={{ margin: 0, fontSize: "18px", fontWeight: 700, letterSpacing: "-0.01em" }}>Vault</h1>
       
       <div className={styles.headerSearch} style={{ position: "relative" }}>
-         <Search 
+          <Search 
             size={14} 
-            style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-dim)" }} 
+            style={{ position: "absolute", right: 12, top: "50%", marginTop: "-7px", color: "var(--text-dim)", pointerEvents: "none" }} 
           />
          <Input
             placeholder="Search entries..."
@@ -24,7 +24,7 @@ export const DashboardHeader = memo(({ search, setSearch }: DashboardHeaderProps
             onChange={(e) => setSearch(e.target.value)}
             style={{ 
               width: "100%", 
-              padding: "0 12px 0 34px", 
+              padding: "0 34px 0 12px", 
               borderRadius: "var(--radius-md)", 
               fontSize: "13px", 
               height: "36px", 

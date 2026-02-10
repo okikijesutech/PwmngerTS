@@ -5,141 +5,176 @@
     <link rel="stylesheet" href="src/popup/popup.css" />
   </head>
   <body>
+    <!-- Login View -->
     <div id="login" class="glass-card" hidden>
-      <h2>Login to Account</h2>
-      <p>Enter your credentials to sync your cloud vault.</p>
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="margin-bottom: 8px;">Welcome Back</h2>
+        <p style="margin: 0;">Unlock your vault to access credentials.</p>
+      </div>
+      
       <input type="email" id="loginEmail" placeholder="Email Address" />
       <input type="password" id="loginPassword" placeholder="Master Password" />
-      <div id="login2FASection" hidden>
-        <p style="font-size: 11px; margin-top: 8px;">2FA Required</p>
-        <input type="text" id="login2FAToken" placeholder="Authenticator Code" />
+      
+      <div id="login2FASection" hidden style="background: rgba(62, 207, 142, 0.1); padding: 12px; border-radius: var(--radius-md); margin-bottom: 12px; border: 1px solid var(--accent-green-glow);">
+        <p style="font-size: 11px; margin: 0 0 8px 0; color: var(--accent-green); font-weight: 600;">2FA Required</p>
+        <input type="text" id="login2FAToken" placeholder="000 000" style="text-align: center; letter-spacing: 2px; margin: 0;" />
       </div>
+
       <button id="loginBtn">Login & Sync</button>
-      <p style="font-size: 12px; margin-top: 10px; text-align: center;">
-        New user? <a href="#" id="showRegisterLink">Create Vault</a>
+      <p style="font-size: 12px; margin-top: 16px; text-align: center;">
+        New here? <a href="#" id="showRegisterLink">Create New Vault</a>
       </p>
     </div>
 
+    <!-- Register View -->
     <div id="register" class="glass-card" hidden>
-      <h2>Secure Your Vault</h2>
-      <p>Create a master password. This is the <strong>only way</strong> to access your data.</p>
+      <h2>Create Vault</h2>
+      <p>Set a strong master password. We cannot recover this for you.</p>
       <input type="email" id="regEmail" placeholder="Email Address" />
       <input type="password" id="regPassword" placeholder="New Master Password" />
+      
       <div id="regStrengthMeter" class="strength-meter">
         <div id="regStrengthBar" class="strength-bar"></div>
       </div>
       <div id="regStrengthText" class="strength-text">None</div>
+      
       <button id="createVaultBtn" disabled>Create & Unlock</button>
-      <p style="font-size: 12px; margin-top: 10px; text-align: center;">
-        Existing user? <a href="#" id="showLoginLink">Login</a>
+      <p style="font-size: 12px; margin-top: 16px; text-align: center;">
+        Already have one? <a href="#" id="showLoginLink">Login</a>
       </p>
     </div>
 
+    <!-- Locked View -->
     <div id="locked" class="glass-card" hidden>
-      <h2>Unlock Vault</h2>
-      <p>Enter your master password to unlock.</p>
+      <div style="text-align: center; margin-bottom: 24px;">
+        <div style="width: 48px; height: 48px; background: var(--slate-800); border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; color: var(--accent-green);">
+          🔒
+        </div>
+        <h2>Unlock Vault</h2>
+        <p>Enter your master password.</p>
+      </div>
+      
       <input type="password" id="masterPassword" placeholder="Master password" autofocus />
       <button id="unlockBtn">Unlock Vault</button>
-      <p style="font-size: 12px; margin-top: 12px; text-align: center;">
-        <a href="#" id="showRecoverLink" style="color: var(--primary); opacity: 0.8;">Forgot password? Use Recovery Kit</a>
+      
+      <p style="font-size: 12px; margin-top: 16px; text-align: center;">
+        <a href="#" id="showRecoverLink" style="color: var(--text-dim); text-decoration: underline;">Forgot password?</a>
       </p>
     </div>
 
+    <!-- Recover View -->
     <div id="recover-view" class="glass-card" hidden>
       <h2>Recover Vault</h2>
-      <p style="font-size: 13px; opacity: 0.8; margin-bottom: 20px;">
-        Upload your <code>recovery_kit.json</code> to regain access to your vault data.
-      </p>
-      <input type="file" id="recoveryFileInput" accept=".json" style="margin-bottom: 20px;" />
+      <p>Upload your <code>recovery_kit.json</code> file.</p>
+      
+      <div style="border: 2px dashed var(--border-subtle); border-radius: var(--radius-lg); padding: 20px; text-align: center; margin-bottom: 20px; background: var(--slate-900);">
+        <input type="file" id="recoveryFileInput" accept=".json" style="border: none; background: transparent; padding: 0;" />
+      </div>
+      
       <div class="button-group">
-        <button id="closeRecoverBtn" style="background: #8c8c8c">Go Back</button>
+        <button id="closeRecoverBtn" style="background: var(--slate-700); color: var(--text-primary);">Cancel</button>
       </div>
     </div>
 
-    <div id="capture-prompt" class="glass-card" style="margin-bottom: 12px; border: 2px solid var(--primary);" hidden>
-      <h3 style="margin-top: 0; font-size: 14px;">Save detected password?</h3>
-      <p style="margin-bottom: 12px; font-size: 12px;">We found a login for <strong id="captureSite"></strong>.</p>
+    <!-- Capture Prompt -->
+    <div id="capture-prompt" class="glass-card" style="margin-bottom: 16px; border-color: var(--accent-green);" hidden>
+      <div style="display: flex; align-items: start; gap: 12px;">
+        <div style="background: var(--accent-green-glow); padding: 8px; border-radius: 50%;">🔑</div>
+        <div>
+          <h3 style="margin: 0 0 4px 0; font-size: 14px; color: var(--accent-green);">Save Login?</h3>
+          <p style="margin: 0 0 12px 0; font-size: 12px;">Save credentials for <strong id="captureSite" style="color: var(--text-primary);"></strong></p>
+        </div>
+      </div>
       <div class="button-group">
         <button id="confirmCaptureBtn" style="padding: 8px;">Save</button>
-        <button id="ignoreCaptureBtn" style="background: #8c8c8c; padding: 8px;">Ignore</button>
+        <button id="ignoreCaptureBtn" style="background: var(--slate-800); color: var(--text-muted); padding: 8px;">Ignore</button>
       </div>
     </div>
 
+    <!-- Main Vault View -->
     <div id="vault" hidden>
-      <div class="glass-card">
+      <div class="glass-card" style="padding: 16px;">
         <div class="vault-header">
-          <input type="text" id="searchInput" placeholder="Search entries..." />
-          <button id="syncBtn" title="Sync with Cloud" style="width: auto; padding: 0 8px; margin: 0; font-size: 16px;">🔄</button>
-          <button id="settingsBtn" title="Settings" style="width: auto; padding: 0 8px; margin: 0; font-size: 16px;">⚙️</button>
-          <button id="showAddEntryBtn" class="fab">+</button>
+          <input type="text" id="searchInput" placeholder="Search..." style="margin-bottom: 0;" />
+          <button id="syncBtn" title="Sync">🔄</button>
+          <button id="settingsBtn" title="Settings">⚙️</button>
         </div>
-        <ul id="entries"></ul>
+        
+        <div style="max-height: 300px; overflow-y: auto; margin: -16px; padding: 16px;">
+           <ul id="entries"></ul>
+        </div>
+        
+        <!-- Generator Section Inline -->
+        <section id="generator" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-subtle);">
+           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <p style="margin: 0; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-dim);">Generator</p>
+            <input type="number" id="length" value="16" min="8" max="64" style="width: 50px; margin: 0; padding: 4px; text-align: center;" />
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="generatedPassword" readonly style="margin: 0; font-family: monospace;" />
+            <button id="generate" style="margin: 0; width: auto; padding: 0 16px;">Generate</button>
+          </div>
+        </section>
       </div>
+      
+      <button id="showAddEntryBtn" class="fab">+</button>
     </div>
 
+    <!-- Settings View -->
     <div id="settings-view" class="glass-card" hidden>
       <h2>Settings</h2>
-      <div style="margin-bottom: 20px;">
-        <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 8px;">Auto-lock Timeout (minutes)</label>
-        <select id="lockTimeoutSelect" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+      
+      <div style="margin-bottom: 24px;">
+        <label style="font-size: 13px; font-weight: 500; display: block; margin-bottom: 8px; color: var(--text-muted);">Auto-lock Timeout</label>
+        <select id="lockTimeoutSelect">
           <option value="1">1 minute</option>
           <option value="5">5 minutes</option>
           <option value="15">15 minutes</option>
           <option value="30">30 minutes</option>
-          <option value="0">Never (session only)</option>
+          <option value="0">Never (Session only)</option>
         </select>
       </div>
-      <div class="button-group">
-        <button id="saveSettingsBtn">Save Settings</button>
-        <button id="downloadKitBtn" style="background: var(--primary); color: white;">📦 Download Recovery Kit</button>
-        <button id="closeSettingsBtn" style="background: #8c8c8c">Close</button>
+
+      <div class="button-group" style="flex-direction: column;">
+        <button id="saveSettingsBtn">Save Changes</button>
+        <button id="downloadKitBtn" style="background: var(--slate-800); border: 1px solid var(--border-subtle); color: var(--text-primary);">
+          📦 Download Recovery Kit
+        </button>
+        <button id="closeSettingsBtn" style="background: transparent; color: var(--text-muted); margin-top: 8px;">Back to Vault</button>
       </div>
     </div>
 
+    <!-- Add/Edit Forms -->
     <div id="add-entry-form" class="glass-card" hidden>
       <h2>Add New Entry</h2>
       <input type="text" id="siteInput" placeholder="Site (e.g. google.com)" />
       <input type="text" id="usernameInput" placeholder="Username" />
       <input type="password" id="passwordInput" placeholder="Password" />
-      <select id="folderSelect" style="width: 100%; margin-bottom: 12px; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+      <select id="folderSelect">
         <option value="">No Folder</option>
       </select>
       <div class="button-group">
-        <button id="saveEntryBtn">Save</button>
-        <button id="cancelAddBtn" style="background: #8c8c8c">Cancel</button>
+        <button id="saveEntryBtn">Save Entry</button>
+        <button id="cancelAddBtn" style="background: var(--slate-800); color: var(--text-muted);">Cancel</button>
       </div>
     </div>
 
     <div id="edit-entry-form" class="glass-card" hidden>
       <h2>Edit Entry</h2>
       <input type="hidden" id="editEntryId" />
-      <input type="text" id="editSiteInput" placeholder="Site (e.g. google.com)" />
+      <input type="text" id="editSiteInput" placeholder="Site" />
       <input type="text" id="editUsernameInput" placeholder="Username" />
       <input type="password" id="editPasswordInput" placeholder="Password" />
-      <select id="editFolderSelect" style="width: 100%; margin-bottom: 12px; padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+      <select id="editFolderSelect">
         <option value="">No Folder</option>
       </select>
       <div class="button-group">
-        <button id="updateEntryBtn">Update</button>
-        <button id="deleteEntryBtn" style="background: #ff4d4f">Delete</button>
-        <button id="cancelEditBtn" style="background: #8c8c8c">Cancel</button>
+        <button id="updateEntryBtn">Save Changes</button>
+        <button id="deleteEntryBtn" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">Delete</button>
       </div>
+      <button id="cancelEditBtn" style="background: transparent; color: var(--text-muted); margin-top: 12px;">Cancel</button>
     </div>
-
-    <section id="generator" class="glass-card" style="margin-top: 12px; padding: 12px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <h3 style="margin: 0; font-size: 12px;">Generator</h3>
-        <input type="number" id="length" value="16" min="12" style="width: 50px; margin: 0; padding: 4px;" />
-      </div>
-      <div style="display: flex; gap: 8px;">
-        <input type="text" id="generatedPassword" readonly style="margin: 0;" />
-        <button id="generate" style="margin: 0; width: auto; padding: 4px 12px;">Go</button>
-      </div>
-    </section>
 
     <script type="module" src="src/popup/popup.ts"></script>
-    <div class="experimental-warning">
-      Zero-Knowledge &bull; v1.0.0
-    </div>
   </body>
 </html>

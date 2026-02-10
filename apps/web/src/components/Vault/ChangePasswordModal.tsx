@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from "react-dom";
 import { Button, Input } from '@pwmnger/ui';
 import { Lock, ShieldAlert, CheckCircle, ArrowRight } from 'lucide-react';
 
@@ -36,8 +37,8 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ onClos
     }
   };
 
-  return (
-    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}>
+  return ReactDOM.createPortal(
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 20 }}>
       <div className="card-premium animate-fade-in" style={{ width: "100%", maxWidth: 440, padding: 32, borderRadius: "var(--radius-xl)" }}>
         
         {step === 1 && (
@@ -120,6 +121,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ onClos
         )}
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

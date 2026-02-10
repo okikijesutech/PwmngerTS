@@ -3,8 +3,8 @@ import { saveAuthToken, loadAuthToken } from "@pwmnger/storage";
 
 const BASE_URL = (globalThis as any).PW_API_URL || "http://localhost:4000";
 
-async function authenticatedFetch(url: string, options: RequestInit = {}) {
-  const token = await loadAuthToken();
+async function authenticatedFetch(url: string, options: RequestInit = {}, isRetry = false) {
+  let token = await loadAuthToken();
   const headers = new Headers(options.headers || {});
   
   headers.set("Content-Type", "application/json");
@@ -12,11 +12,35 @@ async function authenticatedFetch(url: string, options: RequestInit = {}) {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  return fetch(url, {
+  let res = await fetch(url, {
     ...options,
     headers,
     credentials: "include", // Keep cookies for web
   });
+
+  // Silent Refresh Logic
+  if (res.status === 401 && !isRetry && !url.includes("/auth/refresh") && !url.includes("/auth/login")) {
+    try {
+      console.log("Access token expired, attempting silent refresh...");
+      await refreshAccount();
+      
+      // Retry original request with new token
+      token = await loadAuthToken();
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+        res = await fetch(url, {
+          ...options,
+          headers,
+          credentials: "include",
+        });
+      }
+    } catch (e) {
+      console.error("Silent refresh failed", e);
+      // Let the original 401 pass through so UI can redirect to login
+    }
+  }
+
+  return res;
 }
 
 export async function registerAccount(email: string, masterPassword: string) {
